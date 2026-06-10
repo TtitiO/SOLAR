@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 name: "A6000"
 SRAM_capacity: 6291456  # 6MB L2 cache
 SRAM_byte_per_cycle: 768000000000  # 768GB/s at 1.8GHz boost = ~427 bytes/cycle

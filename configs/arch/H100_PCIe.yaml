@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 name: "H100_PCIe"
 SRAM_capacity: 52428800  # 50MB
 SRAM_byte_per_cycle: 10000  # 20TB/s

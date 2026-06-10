@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 name: "Jetson_Thor_T5000"
 # Jetson AGX Thor: Blackwell GPU, 2560 CUDA cores, 96 Gen5 Tensor Cores, 1.57 GHz
 SRAM_capacity: 12582912  # 12MB L2 (estimate; GPU L2 not in public datasheet)

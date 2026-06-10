@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 name: "B200"
 SRAM_capacity: 201326592  # L2 192MB
 SRAM_byte_per_cycle: 43691  # 64TB/s @ 1.5GHz
