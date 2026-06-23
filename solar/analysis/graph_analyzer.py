@@ -640,6 +640,79 @@ class EinsumGraphAnalyzer:
             total_unfused_elems += unfused_elems
             total_intermediate_elems += layer_intermediate_elems
 
+        # ── Liveness pass: peak simultaneously-live intermediate working set ──
+        #
+        # `total_intermediate_elems` above is a *lifetime sum* (every
+        # intermediate tensor's elements summed over the whole graph).  That is
+        # the wrong quantity to compare against on-chip capacity: what fits in
+        # L2/SRAM is the set of intermediates *live at the same instant*, not
+        # their lifetime total.  Here we walk the graph in execution order,
+        # tracking each intermediate tensor's live interval
+        # [producer_step, last_consumer_step], and record the peak sum of live
+        # intermediate elements over all steps.  The perf model gates DRAM
+        # spill on this peak (see perf_model.py / ISSUE_L2_CAPACITY_UNMODELED).
+        #
+        # Execution order is the layer insertion order of `layers_in` (the
+        # graph is emitted in topological-ish order by the upstream processor).
+        layer_order: Dict[str, int] = {
+            lid: idx for idx, lid in enumerate(layers_in.keys())
+        }
+
+        # tensor_name -> element count, taken from the producer's output shapes.
+        tensor_elems: Dict[str, int] = {}
+        for layer_id, layer in layers_in.items():
+            t_names = (layer.get("tensor_names") or {}).get("outputs") or []
+            t_shapes = (layer.get("tensor_shapes") or {}).get("outputs") or []
+            for oname, oshape in zip(t_names, t_shapes):
+                if isinstance(oshape, list):
+                    tensor_elems[oname] = _product(oshape)
+
+        # Build birth/death step for each intermediate tensor.  Birth = step of
+        # its producer; death = max step among its consumers (it stays live
+        # until its last read).  A tensor with no recorded consumer step is
+        # skipped (not a live intermediate for this purpose).
+        peak_intermediate_live_elems = 0
+        if intermediate_tensors:
+            # delta[step] accumulates (+size at birth, -size just after death).
+            births: Dict[int, int] = {}
+            deaths: Dict[int, int] = {}
+            for tname in intermediate_tensors:
+                producer = tensor_producers.get(tname)
+                if producer is None or producer not in layer_order:
+                    continue
+                consumers = tensor_consumers.get(tname) or set()
+                consumer_steps = [
+                    layer_order[c] for c in consumers if c in layer_order
+                ]
+                if not consumer_steps:
+                    continue
+                size = int(tensor_elems.get(tname, 0))
+                if size <= 0:
+                    continue
+                birth = layer_order[producer]
+                death = max(consumer_steps)
+                if death < birth:
+                    death = birth
+                births[birth] = births.get(birth, 0) + size
+                # Free one step *after* the last consumer reads it.
+                deaths[death + 1] = deaths.get(death + 1, 0) + size
+
+            # Sweep the timeline accumulating live elements; record the peak.
+            running = 0
+            num_steps = len(layer_order)
+            for step in range(num_steps + 1):
+                running += births.get(step, 0)
+                running -= deaths.get(step, 0)
+                if running > peak_intermediate_live_elems:
+                    peak_intermediate_live_elems = running
+
+        if self.debug:
+            print(
+                f"Debug: peak live intermediate working set = "
+                f"{peak_intermediate_live_elems} elems "
+                f"(lifetime sum = {total_intermediate_elems})"
+            )
+
         # Deduplicated graph-level external I/O: when the same tensor
         # (e.g. model input x) fans out to multiple ops, count it once.
         # Used for both fused and fused_prefetched totals.
@@ -671,6 +744,7 @@ class EinsumGraphAnalyzer:
                 "fused_prefetched_elements": total_fused_prefetched_elems,
                 "model_io_elements": int(total_model_io_elems),
                 "intermediate_elements": int(total_intermediate_elems),
+                "intermediate_peak_live_elements": int(peak_intermediate_live_elems),
                 "num_intermediate_tensors": len(intermediate_tensors),
                 "num_orphaned_layers": len(_orphaned_layers),
             },

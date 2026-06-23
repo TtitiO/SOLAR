@@ -59,6 +59,15 @@ def main() -> None:
         help="Do not copy analysis.yaml into the output directory.",
     )
     parser.add_argument(
+        "--no-capacity-model",
+        action="store_true",
+        help=(
+            "Disable the L2/SRAM capacity model: intermediate tensors are "
+            "always assumed on-chip (original optimistic behavior). Use for "
+            "before/after SOL comparisons."
+        ),
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         help="Enable debug output.",
@@ -78,6 +87,7 @@ def main() -> None:
         arch_config=args.arch_config,
         precision=args.precision,
         copy_analysis=not args.no_copy_analysis,
+        capacity_aware=not args.no_capacity_model,
     )
     if perf is None:
         print("❌ Perf prediction failed.")
@@ -87,6 +97,14 @@ def main() -> None:
     print(f"  Arch: {perf.get('arch', {}).get('name', 'unknown')}")
     print(f"  Unfused runtime (ms): {perf.get('unfused', {}).get('runtime_ms', 0.0):.4f}")
     print(f"  Fused runtime (ms): {perf.get('fused', {}).get('runtime_ms', 0.0):.4f}")
+    _cache = perf.get("cache", {})
+    if _cache.get("capacity_aware") and not _cache.get("fits_in_l2", True):
+        print(
+            f"  ⚠️  L2 spill: {_cache.get('spilled_bytes', 0):,} bytes "
+            f"(peak live {_cache.get('intermediate_peak_live_bytes', 0):,} > "
+            f"capacity {_cache.get('sram_capacity_bytes', 0):,}, "
+            f"fraction {_cache.get('spill_fraction', 0.0):.3f})"
+        )
     print(f"\n📝 Files saved to {output_dir}:")
     for p in sorted(output_dir.iterdir()):
         if p.is_file():
