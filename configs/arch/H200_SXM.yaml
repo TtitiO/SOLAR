@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # NVIDIA H200 SXM (HGX/DGX, 700W, 900 GB/s NVLink).
-# Same GH100 die / Hopper architecture as H100 SXM, so all tensor-core and SM
-# compute numbers are identical to H100 SXM; only the memory subsystem differs
-# (141 GB HBM3e @ 4.8 TB/s vs H100's 80 GB HBM3 @ 3.35 TB/s).
+# Same GH100 die / Hopper architecture as H100 SXM (CUDA capability 9.0, 132 SMs,
+# 16896 CUDA cores), so tensor-core and SM compute numbers match H100 SXM. The
+# memory subsystem differs (141 GB HBM3e @ 4.8 TB/s) and the H200 also exposes a
+# larger 60 MB L2 vs H100's 50 MB.
 #
 # Convention note: MAC_per_cycle_* values are MACs/cycle (= dense_FLOPS/2/freq),
 # matching B200.yaml / Jetson_Thor_T5000.yaml. The perf model computes
@@ -12,20 +13,23 @@
 # Datasheet figures are quoted "with sparsity"; dense = sparsity / 2 is used here.
 #
 # Sources:
+#   - nvidia-smi / CUDA deviceQuery on actual H200 (CUDA cap 9.0; 132 SM x 128 =
+#     16896 CUDA cores; 1980 MHz max clock; L2 = 62914560 B = 60 MiB; mem clock
+#     3201 MHz, 6144-bit bus).
 #   - NVIDIA H200 Tensor Core GPU Datasheet (memory 141 GB HBM3e, 4.8 TB/s;
 #     FP8 sparse 3,958 TFLOPS / dense 1,979 TFLOPS; "up to 4 PFLOPS FP8").
 #   - University of Utah CHPC GPU hardware guide (H200 with-sparsity table:
 #     FP16 1,979 TFLOPS, FP8 3,958 TFLOPS, INT8 3,958 TOPS).
-#   - H100 SXM datasheet for shared GH100 compute (TF32 989, FP16/BF16 1,979
-#     sparse; FP32 67 TFLOPS; 50 MB L2; 1.98 GHz boost) — H200 reuses this die.
+#   - H100 SXM datasheet for shared GH100 tensor-core dense rates (TF32 494.5,
+#     FP16/BF16 989.5, FP8/INT8 1,979) — H200 reuses this die.
 
 name: "H200_SXM"
-SRAM_capacity: 52428800  # 50 MB L2 (GH100 die, same as H100 SXM)
+SRAM_capacity: 62914560  # 60 MB L2 (measured via deviceQuery on H200; larger than H100 SXM's 50 MB)
 SRAM_byte_per_cycle: 10101  # ~20 TB/s L2 estimate @ 1.98 GHz (L2 BW not officially published)
 DRAM_capacity: 151397597184  # 141 GB HBM3e (141 x 2^30, binary per repo convention)
-DRAM_byte_per_cycle: 2424.2  # 4.8 TB/s @ 1.98 GHz
-freq_GHz: 1.98  # GPU boost clock (Hopper SXM)
-MAC_per_cycle_fp32_sm: 16919   # 67 TFLOPS FP32 (SM/CUDA core) @ 1.98 GHz -> 33.5 TMACS/s
+DRAM_byte_per_cycle: 2424.2  # 4.8 TB/s @ 1.98 GHz (datasheet; deviceQuery 3201 MHz x2 x 6144-bit ~= 4.92 TB/s)
+freq_GHz: 1.98  # GPU max clock (deviceQuery: 1980 MHz), CUDA capability 9.0
+MAC_per_cycle_fp32_sm: 16896   # 16896 CUDA cores (132 SM x 128) x 1 FMA/cyc -> 66.9 TFLOPS @ 1.98 GHz (datasheet 67)
 MAC_per_cycle_tf32_tc: 124874  # 989 TFLOPS sparse / 494.5 dense @ 1.98 GHz -> 247.25 TMACS/s
 MAC_per_cycle_fp16_tc: 249874  # 1,979 TFLOPS sparse / 989.5 dense @ 1.98 GHz -> 494.75 TMACS/s
 MAC_per_cycle_bf16_tc: 249874  # Same as FP16 - BF16 has identical TC throughput
