@@ -1,0 +1,185 @@
+workload:
+  rank_sizes:
+    R0: 1
+    R1: 2048
+    R2: 4096
+    R3: 28672
+    R4: 14336
+    R5: 4096
+  bits_per_value:
+    All: 16
+  persistent_tensors: weight - Intermediates
+  einsums:
+  - name: start
+    tensor_accesses:
+    - name: start_in
+      projection: &id001
+      - r0
+      - r1
+      - r2
+      bits_per_value: 16
+    - name: start
+      projection: *id001
+      output: true
+      bits_per_value: 16
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: Model_linear
+    tensor_accesses:
+    - name: start
+      projection:
+      - r0
+      - r1
+      - r2
+      bits_per_value: 16
+    - name: W1
+      projection:
+      - r3
+      - r2
+      bits_per_value: 16
+    - name: Model_linear
+      projection:
+      - r0
+      - r1
+      - r3
+      output: true
+      bits_per_value: 16
+    renames:
+      input: start
+      output: Model_linear
+      weight: W1
+  - name: Model_chunk
+    tensor_accesses:
+    - name: Model_linear
+      projection:
+      - r0
+      - r1
+      - r3
+      bits_per_value: 16
+    - name: Model_chunk
+      projection:
+      - r0
+      - r1
+      - r4
+      output: true
+      bits_per_value: 16
+    - name: Model_chunk_1
+      projection:
+      - r0
+      - r1
+      - r4
+      output: true
+      bits_per_value: 16
+    renames:
+      input: Model_linear
+      output: Model_chunk
+      weight: Nothing()
+  - name: Model_sigmoid
+    tensor_accesses:
+    - name: Model_chunk
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 16
+    - name: Model_sigmoid
+      projection:
+      - r0
+      - r1
+      - r4
+      output: true
+      bits_per_value: 16
+    renames:
+      input: Model_chunk
+      output: Model_sigmoid
+      weight: Nothing()
+  - name: Model_mul
+    tensor_accesses:
+    - name: Model_chunk
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 16
+    - name: Model_sigmoid
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 16
+    - name: Model_mul
+      projection:
+      - r0
+      - r1
+      - r4
+      output: true
+      bits_per_value: 16
+    renames:
+      input: Model_chunk
+      output: Model_mul
+      weight: Model_sigmoid
+  - name: Model_mul_1
+    tensor_accesses:
+    - name: Model_chunk
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 16
+    - name: Model_mul
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 16
+    - name: Model_mul_1
+      projection:
+      - r0
+      - r1
+      - r4
+      output: true
+      bits_per_value: 16
+    renames:
+      input: Model_chunk
+      output: Model_mul_1
+      weight: Model_mul
+  - name: Model_linear_1
+    tensor_accesses:
+    - name: Model_mul_1
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 16
+    - name: W2
+      projection:
+      - r5
+      - r4
+      bits_per_value: 16
+    - name: Model_linear_1
+      projection:
+      - r0
+      - r1
+      - r5
+      output: true
+      bits_per_value: 16
+    renames:
+      input: Model_mul_1
+      output: Model_linear_1
+      weight: W2
+renames:
+  einsums:
+  - name: default
+    tensor_accesses:
+    - name: input
+      source: Inputs & Intermediates
+      expected_count: 1
+    - name: output
+      source: Outputs
+      expected_count: 1
+    - name: weight
+      source: ~(input | output)
+      expected_count: 1

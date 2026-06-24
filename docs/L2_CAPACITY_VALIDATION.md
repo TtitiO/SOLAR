@@ -189,108 +189,227 @@ Spill adds 176.2M elements (336 MB). Memory cycles rise 3.6× but still below co
 
 ---
 
+---
+
+## Case 3 — Full Attention (`sol_execbench_l1_082`) ✅ Bottleneck Flips
+
+**Operator**: `QKV_proj → QK LayerNorm → QK^T → softmax → AV → o_proj`  
+**Shapes**: `H=24, D=64, dim=1536, B=1, S=2048`, fp16 (attn scores in fp32)  
+**Model file**: `model_082.py`
+
+### Geometry
+
+| Tensor | Shape | Size |
+|--------|-------|------|
+| `hidden_states` | [1, 2048, 1536] fp16 | 6.3 MB |
+| `qkv_weight` | [4608, 1536] fp16 | 14.2 MB |
+| `q` / `k` / `v` (per head) | [1, 24, 2048, 64] fp16 | 3.1 MB each |
+| `attn_scores` (intermediate) | [1, 24, 2048, 2048] fp32 | **390 MB** |
+| `attn_probs` (intermediate) | [1, 24, 2048, 2048] fp32 | **390 MB** |
+| `out_proj_weight` | [1536, 1536] fp16 | 4.7 MB |
+| `output` | [1, 2048, 1536] fp16 | 6.3 MB |
+
+**Peak live intermediates**: 408.9 MB (390 MB reported)  
+**L2 capacity**: 75.5 MB (72.0 MB reported)
+
+### Benchmark
+
+| Quantity | Value |
+|----------|-------|
+| Tb (eager) | 4.1078 ms |
+| Tk (`torch.compile`) | 1.7336 ms |
+| Speedup Tb/Tk | 2.37× |
+
+### Solar Pipeline
+
+```
+Stage 1 (process_model)   → 30 layers extracted
+Stage 2 (toeinsum_model)  → 30/30 layers with einsum equations
+Stage 3 (analyze_model)   → 25 layers, 32.2G MACs, 6.3M fused elements
+Stage 4 (predict_perf)    → perf_RTX_4090.yaml (blind + aware)
+```
+
+### Capacity Diagnostics
+
+| Field | Blind | Aware |
+|-------|-------|-------|
+| `capacity_aware` | false | true |
+| `spilled_bytes` | 0 | 1,128,590,414 (1.05 GB) |
+| `spill_fraction` | 0.8154 | 0.8154 |
+| `peak_live_bytes` | 408,944,640 | 408,944,640 |
+| `fits_in_l2` | **false** | **false** |
+
+### Roofline Details
+
+| Field | Blind | Aware |
+|-------|-------|-------|
+| `fused.memory_bytes` | 12,582,912 (12 MB) | 1,141,173,326 (1.09 GB) |
+| `fused.compute_cycles` | 491,520 | 491,520 |
+| `fused.memory_cycles` | 31,457 | **2,852,933** |
+| `fused.bottleneck` | **compute** | **memory** |
+| `fused.runtime_ms` | **0.1950** | **1.1321** |
+
+Memory cycles jump **91×** (31K → 2,853K), flipping the bottleneck compute→memory.
+T_SOL increases **5.8×**.
+
+### SOL Scores
+
+| Quantity | Value |
+|----------|-------|
+| Tb (ms) | 4.1078 |
+| Tk (ms) | 1.7336 |
+| T_SOL_blind (ms) | 0.1950 |
+| T_SOL_aware (ms) | 1.1321 |
+| blind bottleneck | compute |
+| aware bottleneck | **memory** (flipped) |
+| spill_fraction | 0.8154 (81.5%) |
+| S_blind | 0.7178 |
+| S_aware | 0.8319 |
+| **Δ (aware − blind)** | **+0.1141 (+11.4 pp)** |
+
+### Interpretation
+
+- **T_SOL_blind = 0.195 ms** is physically unreachable: it assumes the 390 MB `attn_scores`
+  tensor stays in 72 MB L2. Only 12.6 MB of model I/O is counted, so the model thinks
+  the graph is compute-bound (491K > 31K cycles).
+- **T_SOL_aware = 1.132 ms** adds 1.05 GB of spilled DRAM traffic. Memory cycles swamp
+  compute (2,853K > 491K), and the true bottleneck is memory.
+- **S_blind = 0.7178** undervalues the kernel because its denominator `Tb − T_SOL_blind`
+  is inflated by an impossibly low T_SOL.
+- **S_aware = 0.8319** gives the correct score: the optimized kernel achieves 83.2%
+  of the achievable memory-bandwidth roofline.
+- **Δ = +11.4 pp**: a kernel ranked by S_blind would be undervalued by 11.4 percentage
+  points relative to its true capability.
+
+---
+
 ## Analysis
 
-### The capacity model works correctly
-
-In both cases, the aware mode:
-
-- Correctly identifies `fits_in_l2 == false` when peak live (168 / 128 MB) exceeds L2 (72 MB).
-- Computes a spill fraction (57.1% / 43.8%) proportional to the overflow.
-- Adds the corresponding spilled bytes to `fused.memory_elements` and `fused.memory_bytes`.
-- Increases `memory_cycles` proportionally (2.0× / 3.6×).
-
-The blind mode reports the same `capacity_aware: false` and `spilled_bytes: 0`, but still
-records the diagnostic fields (`fits_in_l2`, `spill_fraction`) for comparison visibility.
-
-### Why Δ = 0
+### Why Cases 1–2 showed Δ = 0
 
 The roofline model computes `total_cycles = max(compute_cycles, memory_cycles)`.
-For both operators on RTX 4090:
+For the MLP and VAE operators on RTX 4090:
 
 | Case | compute_cycles | memory_cycles (blind) | memory_cycles (aware) | headroom |
 |------|---------------|----------------------|----------------------|----------|
 | MLP | 5,505,024 | 964,689 | 1,887,436 | 2.9× |
 | VAE | 2,359,296 | 341,442 | 1,222,246 | 1.9× |
 
-Even with 100% spill (the worst-case capacity miss), both operators would remain
-compute-bound. Ridge point = `MAC_per_cycle_fp16_tc / DRAM_byte_per_cycle` = 65536 / 400 = 163.84;
-the aware arithmetic intensities (478 / 316) are well above this threshold.
+Even with 100% spill, both GEMM-heavy operators remain compute-bound. Ridge point
+= 163.84; their aware arithmetic intensities (478 / 316) are well above this.
+
+### Why Case 3 shows Δ = +11.4 pp
+
+The attention operator has a much lower arithmetic intensity because the `[B,H,S,S]`
+intermediate dwarfs the compute:
+
+| Case | compute_cycles | memory_cycles (blind) | memory_cycles (aware) | headroom |
+|------|---------------|----------------------|----------------------|----------|
+| Attention | 491,520 | 31,457 | 2,852,933 | **flipped** |
+
+In blind mode, the fused model counts only 12.6 MB of model I/O (the attention scores
+are "free" intermediates). Memory cycles are negligible and the graph appears
+compute-bound. In aware mode, the 81.5% spill adds 1.05 GB of DRAM traffic, pushing
+memory cycles to 91× their blind value and overwhelming compute. The bottleneck flips.
 
 ### When Δ ≠ 0
 
 The capacity model changes T_SOL only when the spill pushes memory_cycles above
 compute_cycles. This requires:
 
-1. **Memory-bound operators** — AI below the ridge point (element-wise ops, small
-   reductions, layer norms, attention softmax patterns, embedding lookups).
-2. **Hardware with lower compute:bandwidth ratio** — lower ridge point makes it
-   easier for the spill to flip the bottleneck (e.g., GPUs with fewer tensor cores
-   or higher memory bandwidth).
-3. **Higher spill fractions** — spill close to 100% with AI near the ridge point.
+1. **Memory-bound operators or near-ridge operators** — AI below or near the ridge
+   point (attention with large `[B,H,S,S]` intermediates, element-wise ops, layer norms,
+   reduction ops on large tensors).
+2. **Intermediate-dominated graphs** — where intermediate traffic is orders of
+   magnitude larger than model I/O (the attention scores alone are 390 MB vs 12.6 MB
+   of model weights + I/O).
+3. **Large enough spill fraction** — the [B,H,S,S] tensor grows as O(S²), so any
+   reasonable sequence length quickly overflows L2.
 
-### The toggle's diagnostic value
+### Diagnostic value in all cases
 
 Even when Δ = 0, the `cache` block provides actionable information:
 
-- `fits_in_l2 == false` signals that fusion alone is insufficient — the intermediate
-  working set physically cannot fit on-chip.
-- `spill_fraction` quantifies how much intermediate traffic must traverse DRAM,
-  independent of whether compute dominates.
-- These fields enable **kernel designers** to reason about memory pressure and
-  justify techniques like tiling, recomputation, or operator fusion that reduce
-  the peak live working set.
+- `fits_in_l2 == false` signals that fusion alone is insufficient.
+- `spill_fraction` quantifies how much intermediate traffic must traverse DRAM.
+- These fields guide kernel optimization (tiling, recomputation, FlashAttention-style
+  fusion) to shrink the peak live set below `sram_capacity_bytes`.
 
 ---
 
 ## Files Produced
 
+All study artifacts live under `studies/l2_capacity/`:
+
 ```
-model_048.py                          # Fused gated MLP model
-model_049.py                          # VAE residual model
-bench_048.py                          # MLP GPU benchmark
-bench_049.py                          # VAE GPU benchmark
-
-output/                               # MLP Solar pipeline
-├── graph/pytorch_graph.yaml
-├── einsum/einsum_graph_renamed.yaml
-├── analysis/analysis.yaml
-├── perf_aware/perf_RTX_4090.yaml
-└── perf_blind/perf_RTX_4090.yaml
-
-output_vae/                           # VAE Solar pipeline
-├── graph/pytorch_graph.yaml
-├── einsum/einsum_graph_renamed.yaml
-├── analysis/analysis.yaml
-├── perf_aware/perf_RTX_4090.yaml
-└── perf_blind/perf_RTX_4090.yaml
+studies/l2_capacity/
+├── README.md
+├── case1_mlp/
+│   ├── model.py                    # Fused gated MLP model
+│   ├── bench.py                    # GPU benchmark
+│   └── output/                     # Solar pipeline output
+├── case2_vae/
+│   ├── model.py                    # VAE residual model
+│   ├── bench.py                    # GPU benchmark
+│   └── output/
+└── case3_attention/
+    ├── model.py                    # Full attention model
+    ├── bench.py                    # GPU benchmark
+    └── output/
 ```
 
 ## Reproducing
 
+All commands run from the repository root.
+
 ```bash
 # Case 1: Fused Gated MLP
-python3 bench_048.py
+cd studies/l2_capacity/case1_mlp && python3 bench.py
 
-python -m solar.cli.process_model --model-file model_048.py --output-dir output/graph
-python -m solar.cli.toeinsum_model --graph-path output/graph/pytorch_graph.yaml --output-dir output/einsum --no-copy-graph
-python -m solar.cli.analyze_model --einsum-graph-path output/einsum/einsum_graph_renamed.yaml --output-dir output/analysis --precision fp16
-python -m solar.cli.predict_perf_model --analysis-path output/analysis/analysis.yaml --output-dir output/perf_aware --arch-config configs/arch/RTX4090.yaml --precision fp16
-python -m solar.cli.predict_perf_model --analysis-path output/analysis/analysis.yaml --output-dir output/perf_blind --arch-config configs/arch/RTX4090.yaml --precision fp16 --no-capacity-model
+python -m solar.cli.process_model --model-file studies/l2_capacity/case1_mlp/model.py --output-dir studies/l2_capacity/case1_mlp/output/graph
+python -m solar.cli.toeinsum_model --graph-path studies/l2_capacity/case1_mlp/output/graph/pytorch_graph.yaml --output-dir studies/l2_capacity/case1_mlp/output/einsum --no-copy-graph
+python -m solar.cli.analyze_model --einsum-graph-path studies/l2_capacity/case1_mlp/output/einsum/einsum_graph_renamed.yaml --output-dir studies/l2_capacity/case1_mlp/output/analysis --precision fp16
+python -m solar.cli.predict_perf_model --analysis-path studies/l2_capacity/case1_mlp/output/analysis/analysis.yaml --output-dir studies/l2_capacity/case1_mlp/output/perf_aware --arch-config configs/arch/RTX4090.yaml --precision fp16
+python -m solar.cli.predict_perf_model --analysis-path studies/l2_capacity/case1_mlp/output/analysis/analysis.yaml --output-dir studies/l2_capacity/case1_mlp/output/perf_blind --arch-config configs/arch/RTX4090.yaml --precision fp16 --no-capacity-model
 
 # Case 2: VAE Residual
-python3 bench_049.py
+cd studies/l2_capacity/case2_vae && python3 bench.py
 
-python -m solar.cli.process_model --model-file model_049.py --output-dir output_vae/graph
-python -m solar.cli.toeinsum_model --graph-path output_vae/graph/pytorch_graph.yaml --output-dir output_vae/einsum --no-copy-graph
-python -m solar.cli.analyze_model --einsum-graph-path output_vae/einsum/einsum_graph_renamed.yaml --output-dir output_vae/analysis --precision fp16
-python -m solar.cli.predict_perf_model --analysis-path output_vae/analysis/analysis.yaml --output-dir output_vae/perf_aware --arch-config configs/arch/RTX4090.yaml --precision fp16
-python -m solar.cli.predict_perf_model --analysis-path output_vae/analysis/analysis.yaml --output-dir output_vae/perf_blind --arch-config configs/arch/RTX4090.yaml --precision fp16 --no-capacity-model
+python -m solar.cli.process_model --model-file studies/l2_capacity/case2_vae/model.py --output-dir studies/l2_capacity/case2_vae/output/graph
+python -m solar.cli.toeinsum_model --graph-path studies/l2_capacity/case2_vae/output/graph/pytorch_graph.yaml --output-dir studies/l2_capacity/case2_vae/output/einsum --no-copy-graph
+python -m solar.cli.analyze_model --einsum-graph-path studies/l2_capacity/case2_vae/output/einsum/einsum_graph_renamed.yaml --output-dir studies/l2_capacity/case2_vae/output/analysis --precision fp16
+python -m solar.cli.predict_perf_model --analysis-path studies/l2_capacity/case2_vae/output/analysis/analysis.yaml --output-dir studies/l2_capacity/case2_vae/output/perf_aware --arch-config configs/arch/RTX4090.yaml --precision fp16
+python -m solar.cli.predict_perf_model --analysis-path studies/l2_capacity/case2_vae/output/analysis/analysis.yaml --output-dir studies/l2_capacity/case2_vae/output/perf_blind --arch-config configs/arch/RTX4090.yaml --precision fp16 --no-capacity-model
+
+# Case 3: Full Attention (sol_execbench_l1_082)
+cd studies/l2_capacity/case3_attention && python3 bench.py
+
+python -m solar.cli.process_model --model-file studies/l2_capacity/case3_attention/model.py --output-dir studies/l2_capacity/case3_attention/output/graph
+python -m solar.cli.toeinsum_model --graph-path studies/l2_capacity/case3_attention/output/graph/pytorch_graph.yaml --output-dir studies/l2_capacity/case3_attention/output/einsum --no-copy-graph
+python -m solar.cli.analyze_model --einsum-graph-path studies/l2_capacity/case3_attention/output/einsum/einsum_graph_renamed.yaml --output-dir studies/l2_capacity/case3_attention/output/analysis --precision fp16
+python -m solar.cli.predict_perf_model --analysis-path studies/l2_capacity/case3_attention/output/analysis/analysis.yaml --output-dir studies/l2_capacity/case3_attention/output/perf_aware --arch-config configs/arch/RTX4090.yaml --precision fp16
+python -m solar.cli.predict_perf_model --analysis-path studies/l2_capacity/case3_attention/output/analysis/analysis.yaml --output-dir studies/l2_capacity/case3_attention/output/perf_blind --arch-config configs/arch/RTX4090.yaml --precision fp16 --no-capacity-model
 ```
 
 ## Conclusion
 
-1. **T_SOL_aware == T_SOL_blind** for both operators on RTX 4090 — the capacity model adds realistic DRAM time, but compute dominates so total cycles are unchanged.
-2. **S_aware == S_blind** — Δ = 0; the capacity toggle does not change the SOL score for these compute-bound operators.
-3. **fits_in_l2 == false** and **spill_fraction > 0** are confirmed — the overflow is real and correctly quantified.
-4. The capacity model's value is in **identifying when fusion alone is insufficient** (via `fits_in_l2` / `spill_fraction`), even when the runtime bottleneck is unchanged. These diagnostics guide kernel optimization: tiling, recomputation, or operator fusion that shrinks the peak live set below `sram_capacity_bytes`.
+1. **The capacity model works correctly** — all three cases show correct spill detection
+   and byte accounting. `fits_in_l2 == false` when peak live exceeds L2 capacity.
+
+2. **Δ = 0 for compute-bound operators (Cases 1–2)** — the MLP and VAE operators are
+   GEMM-heavy; the spill adds DRAM traffic but compute cycles still dominate. The
+   capacity toggle does not change T_SOL or the SOL score.
+
+3. **Δ = +0.114 (+11.4 pp) for the attention operator (Case 3)** — the `[B,H,S,S]`
+   attention scores intermediate creates a 91× memory cycle increase, flipping the
+   bottleneck compute→memory. T_SOL rises 5.8×. The kernel's true SOL score is
+   11.4 percentage points higher than the capacity-blind score would suggest.
+
+4. **Condition for Δ ≠ 0**: the operator must be memory-bound (or near the ridge)
+   in blind mode, OR the spill must be large enough to push `mem_cycles > compute_cycles`.
+   This requires intermediate-dominated graphs where intermediate traffic dwarfs model I/O
+   (e.g., attention scores, large feature map chains in non-GEMM ops).
+
+5. **Diagnostic value is universal** — even when Δ = 0, `fits_in_l2` and `spill_fraction`
+   guide kernel optimization: they tell you whether fusion alone is sufficient, and
+   quantify the memory pressure that tiling, recomputation, or fused kernels must address.
