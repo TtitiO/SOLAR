@@ -1,11 +1,3 @@
-"""43_MinGPTCausalAttention (kernelbench_l3_043) — optimized kernel.
-
-DSL chosen: CUDA C++ — reason: native PyTorch implementation for SOLAR traceability
-Operator: KernelBench level 3 problem 43: 43_MinGPTCausalAttention.
-
-Task: implement or optimize the PyTorch `Model` with custom GPU kernels while preserving the constructor, `forward` input/output contract, an
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -70,4 +62,3 @@ def get_inputs():
 
 def get_init_inputs():
     return [n_embd, n_head, attn_pdrop, resid_pdrop, max_seqlen]
-
