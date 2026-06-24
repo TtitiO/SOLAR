@@ -1,0 +1,291 @@
+model_name: model
+layers:
+  start:
+    type: start
+    einsum_equation: ->A0B0C0D0
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: false
+    tensor_names:
+      inputs: []
+      outputs:
+      - start.Output
+    tensor_types:
+      inputs: []
+      outputs:
+      - input
+    tensor_shapes:
+      inputs: []
+      outputs:
+      - - 1
+        - 20
+        - 2048
+        - 2048
+    operands:
+      start:
+      - A0
+      - B0
+      - C0
+      - D0
+    connections:
+      inputs: []
+      outputs:
+      - Model.matmul
+    tensor_dtypes:
+      inputs: []
+      outputs:
+      - torch.bfloat16
+  start_1:
+    type: start
+    einsum_equation: ->A1B1C1D1
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: false
+    tensor_names:
+      inputs: []
+      outputs:
+      - start_1.Output
+    tensor_types:
+      inputs: []
+      outputs:
+      - input
+    tensor_shapes:
+      inputs: []
+      outputs:
+      - - 1
+        - 20
+        - 2048
+        - 64
+    operands:
+      start_1:
+      - A1
+      - B1
+      - C1
+      - D1
+    connections:
+      inputs: []
+      outputs:
+      - Model.matmul
+    tensor_dtypes:
+      inputs: []
+      outputs:
+      - torch.bfloat16
+  Model.matmul:
+    type: matmul
+    einsum_equation: B0B1MK,B0B1KN->B0B1MN
+    elementwise_op: mul
+    reduction_op: add
+    is_real_einsum: true
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - start.Output
+      - start_1.Output
+      outputs:
+      - Model.matmul.Output
+    tensor_types:
+      inputs:
+      - input
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 20
+        - 2048
+        - 2048
+      - - 1
+        - 20
+        - 2048
+        - 64
+      outputs:
+      - - 1
+        - 20
+        - 2048
+        - 64
+    operands:
+      Input:
+      - B0
+      - B1
+      - M
+      - K
+      Weight:
+      - B0
+      - B1
+      - K
+      - N
+      Output:
+      - B0
+      - B1
+      - M
+      - N
+    connections:
+      inputs:
+      - start
+      - start_1
+      outputs:
+      - Model.transpose
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 20, 2048, 2048), dtype=torch.bfloat16), Tensor(shape=(1,
+      20, 2048, 64), dtype=torch.bfloat16)], {}]'
+    taco_expression: O0[b0,b1,m,n] = In0[b0,b1,m,k] * In1[b0,b1,k,n]
+  Model.transpose:
+    type: transpose
+    einsum_equation: ABCD->ACBD
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - Model.matmul.Output
+      outputs:
+      - Model.transpose.Output
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 20
+        - 2048
+        - 64
+      outputs:
+      - - 1
+        - 2048
+        - 20
+        - 64
+    operands:
+      Input:
+      - A
+      - B
+      - C
+      - D
+      Output:
+      - A
+      - C
+      - B
+      - D
+    connections:
+      inputs:
+      - Model.matmul
+      outputs:
+      - Model.contiguous
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 20, 2048, 64), dtype=torch.bfloat16), 1, 2],
+      {}]'
+    taco_expression: O0[a,c,b,d] = In0[a,b,c,d]
+  Model.contiguous:
+    type: contiguous
+    einsum_equation: ABCD->ABCD
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - Model.transpose.Output
+      outputs:
+      - Model.contiguous.Output
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 2048
+        - 20
+        - 64
+      outputs:
+      - - 1
+        - 2048
+        - 20
+        - 64
+    operands:
+      Input:
+      - A
+      - B
+      - C
+      - D
+      Output:
+      - A
+      - B
+      - C
+      - D
+    connections:
+      inputs:
+      - Model.transpose
+      outputs:
+      - Model.reshape
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 2048, 20, 64), dtype=torch.bfloat16)], {}]'
+    taco_expression: O0[a,b,c,d] = In0[a,b,c,d]
+  Model.reshape:
+    type: reshape
+    einsum_equation: ABCD->ABR0
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - Model.contiguous.Output
+      outputs:
+      - Model.reshape.Output
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 2048
+        - 20
+        - 64
+      outputs:
+      - - 1
+        - 2048
+        - 1280
+    operands:
+      Input:
+      - A
+      - B
+      - C
+      - D
+      Output:
+      - A
+      - B
+      - R0
+    connections:
+      inputs:
+      - Model.contiguous
+      outputs: []
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 2048, 20, 64), dtype=torch.bfloat16), 1, 2048,
+      1280], {}]'
+    taco_expression: O0[a,b,r0] = In0[a,b,c,d]

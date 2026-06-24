@@ -1,0 +1,316 @@
+workload:
+  rank_sizes:
+    R0: 16
+    R1: 1024
+    R2: 768
+    R3: 2304
+    R4: 768
+    R5: 12
+    R6: 64
+    R7: 64
+    R8: 768
+  bits_per_value:
+    All: 32
+  persistent_tensors: weight - Intermediates
+  einsums:
+  - name: start
+    tensor_accesses:
+    - name: start_in
+      projection: &id001
+      - r0
+      - r1
+      - r2
+      bits_per_value: 32
+    - name: start
+      projection: *id001
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: Model_linear
+    tensor_accesses:
+    - name: start
+      projection:
+      - r0
+      - r1
+      - r2
+      bits_per_value: 32
+    - name: W1
+      projection:
+      - r3
+      - r2
+      bits_per_value: 32
+    - name: Model_linear
+      projection:
+      - r0
+      - r1
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: start
+      output: Model_linear
+      weight: W1
+  - name: Model_linear_bias_add
+    tensor_accesses:
+    - name: Model_linear
+      projection:
+      - r0
+      - r1
+      - r3
+      bits_per_value: 32
+    - name: W2
+      projection:
+      - r3
+      bits_per_value: 32
+    - name: Model_linear_bias_add
+      projection:
+      - r0
+      - r1
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_linear
+      output: Model_linear_bias_add
+      weight: W2
+  - name: Model_split
+    tensor_accesses:
+    - name: Model_linear_bias_add
+      projection:
+      - r0
+      - r1
+      - r3
+      bits_per_value: 32
+    - name: Model_split
+      projection:
+      - r0
+      - r1
+      - r4
+      output: true
+      bits_per_value: 32
+    - name: Model_split_1
+      projection:
+      - r0
+      - r1
+      - r4
+      output: true
+      bits_per_value: 32
+    - name: Model_split_2
+      projection:
+      - r0
+      - r1
+      - r4
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_linear_bias_add
+      output: Model_split
+      weight: Nothing()
+  - name: Model_view
+    tensor_accesses:
+    - name: Model_split
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 32
+    - name: Model_view
+      projection:
+      - r0
+      - r1
+      - r5
+      - r6
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_split
+      output: Model_view
+      weight: Nothing()
+  - name: Model_view_1
+    tensor_accesses:
+    - name: Model_split
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 32
+    - name: Model_view_1
+      projection:
+      - r0
+      - r1
+      - r5
+      - r6
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_split
+      output: Model_view_1
+      weight: Nothing()
+  - name: Model_view_2
+    tensor_accesses:
+    - name: Model_split
+      projection:
+      - r0
+      - r1
+      - r4
+      bits_per_value: 32
+    - name: Model_view_2
+      projection:
+      - r0
+      - r1
+      - r5
+      - r7
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_split
+      output: Model_view_2
+      weight: Nothing()
+  - name: Model_matmul
+    tensor_accesses:
+    - name: Model_view
+      projection:
+      - r0
+      - r1
+      - r5
+      - r6
+      bits_per_value: 32
+    - name: Model_view_1
+      projection:
+      - r0
+      - r1
+      - r5
+      - r6
+      bits_per_value: 32
+    - name: Model_matmul
+      projection:
+      - r0
+      - r5
+      - r1
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_view
+      output: Model_matmul
+      weight: Model_view_1
+  - name: Model_mul
+    tensor_accesses:
+    - name: Model_matmul
+      projection:
+      - r0
+      - r5
+      - r1
+      bits_per_value: 32
+    - name: Model_mul
+      projection:
+      - r0
+      - r5
+      - r1
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_matmul
+      output: Model_mul
+      weight: Nothing()
+  - name: Model_masked_fill
+    tensor_accesses:
+    - name: Model_mul
+      projection:
+      - r0
+      - r5
+      - r1
+      bits_per_value: 32
+    - name: Model_masked_fill
+      projection:
+      - r0
+      - r5
+      - r1
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_mul
+      output: Model_masked_fill
+      weight: Nothing()
+  - name: Model_relu
+    tensor_accesses:
+    - name: Model_masked_fill
+      projection:
+      - r0
+      - r5
+      - r1
+      bits_per_value: 32
+    - name: Model_relu
+      projection:
+      - r0
+      - r5
+      - r1
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_masked_fill
+      output: Model_relu
+      weight: Nothing()
+  - name: Model_matmul_1
+    tensor_accesses:
+    - name: Model_relu
+      projection:
+      - r0
+      - r5
+      - r1
+      bits_per_value: 32
+    - name: Model_view_2
+      projection:
+      - r0
+      - r1
+      - r5
+      - r7
+      bits_per_value: 32
+    - name: Model_matmul_1
+      projection:
+      - r0
+      - r5
+      - r1
+      - r7
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_relu
+      output: Model_matmul_1
+      weight: Model_view_2
+  - name: Model_view_3
+    tensor_accesses:
+    - name: Model_matmul_1
+      projection:
+      - r0
+      - r5
+      - r1
+      - r7
+      bits_per_value: 32
+    - name: Model_view_3
+      projection:
+      - r0
+      - r1
+      - r8
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_matmul_1
+      output: Model_view_3
+      weight: Nothing()
+renames:
+  einsums:
+  - name: default
+    tensor_accesses:
+    - name: input
+      source: Inputs & Intermediates
+      expected_count: 1
+    - name: output
+      source: Outputs
+      expected_count: 1
+    - name: weight
+      source: ~(input | output)
+      expected_count: 1

@@ -1,0 +1,259 @@
+layers:
+  Model.div:
+    type: div
+    einsum_equation: ABCD->ABCD
+    is_real_einsum: false
+    macs: 0
+    other_ops: 536870912
+    flops: 0
+    unfused_elements: 1073741824
+    orojenesis_elements: null
+    fused_elements: 536870912
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    tensor_sizes:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    memory_elements:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    input_elements: 536870912
+    output_elements: 536870912
+    intermediate_elements: 536870912
+    model_io_elements: 536870912
+    input_is_intermediate: false
+    output_is_intermediate: true
+    is_orphaned: false
+    connections:
+      inputs:
+      - start
+      outputs:
+      - Model.tanh
+  Model.tanh:
+    type: tanh
+    einsum_equation: ABCD->ABCD
+    is_real_einsum: false
+    macs: 0
+    other_ops: 536870912
+    flops: 0
+    unfused_elements: 1073741824
+    orojenesis_elements: null
+    fused_elements: 0
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    tensor_sizes:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    memory_elements:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    input_elements: 536870912
+    output_elements: 536870912
+    intermediate_elements: 1073741824
+    model_io_elements: 0
+    input_is_intermediate: true
+    output_is_intermediate: true
+    is_orphaned: false
+    connections:
+      inputs:
+      - Model.div
+      outputs:
+      - Model.mul
+  Model.mul:
+    type: mul
+    einsum_equation: ABCD->ABCD
+    is_real_einsum: false
+    macs: 0
+    other_ops: 536870912
+    flops: 0
+    unfused_elements: 1073741824
+    orojenesis_elements: null
+    fused_elements: 0
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    tensor_sizes:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    memory_elements:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    input_elements: 536870912
+    output_elements: 536870912
+    intermediate_elements: 1073741824
+    model_io_elements: 0
+    input_is_intermediate: true
+    output_is_intermediate: true
+    is_orphaned: false
+    connections:
+      inputs:
+      - Model.tanh
+      outputs:
+      - Model.softmax
+  Model.softmax:
+    type: softmax
+    einsum_equation: ABCD->ABCD
+    is_real_einsum: false
+    macs: 0
+    other_ops: 536870912
+    flops: 0
+    unfused_elements: 1073741824
+    orojenesis_elements: null
+    fused_elements: 0
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    tensor_sizes:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    memory_elements:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    input_elements: 536870912
+    output_elements: 536870912
+    intermediate_elements: 1073741824
+    model_io_elements: 0
+    input_is_intermediate: true
+    output_is_intermediate: true
+    is_orphaned: false
+    connections:
+      inputs:
+      - Model.mul
+      outputs:
+      - Model.to
+  Model.to:
+    type: to
+    einsum_equation: ABCD->ABCD
+    is_real_einsum: false
+    macs: 0
+    other_ops: 0
+    flops: 0
+    unfused_elements: 1073741824
+    orojenesis_elements: null
+    fused_elements: 536870912
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    tensor_sizes:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    memory_elements:
+      inputs:
+      - 536870912
+      outputs:
+      - 536870912
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    input_elements: 536870912
+    output_elements: 536870912
+    intermediate_elements: 536870912
+    model_io_elements: 536870912
+    input_is_intermediate: true
+    output_is_intermediate: false
+    is_orphaned: false
+    connections:
+      inputs:
+      - Model.softmax
+      outputs: []
+total:
+  num_layers: 5
+  num_start_nodes_filtered: 1
+  macs: 0
+  other_ops: 2147483648
+  flops: 0
+  unfused_elements: 5368709120
+  orojenesis_elements: null
+  fused_elements: 1073741824
+  fused_prefetched_elements: 1073741824
+  model_io_elements: 1073741824
+  intermediate_elements: 4294967296
+  intermediate_peak_live_elements: 1073741824
+  num_intermediate_tensors: 4
+  num_orphaned_layers: 0
+metadata:
+  precision: fp16
+  bytes_per_element: 2
+  source_graph: /home/tinglin/wksp/SOLAR/studies/l2_capacity/sol_execbench_l1_046/output/einsum/einsum_graph_renamed.yaml

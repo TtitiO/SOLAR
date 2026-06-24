@@ -1,0 +1,296 @@
+model_name: model
+layers:
+  start:
+    type: start
+    einsum_equation: ->A0B0C0D0
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: false
+    tensor_names:
+      inputs: []
+      outputs:
+      - start.Output
+    tensor_types:
+      inputs: []
+      outputs:
+      - input
+    tensor_shapes:
+      inputs: []
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    operands:
+      start:
+      - A0
+      - B0
+      - C0
+      - D0
+    connections:
+      inputs: []
+      outputs:
+      - Model.div
+    tensor_dtypes:
+      inputs: []
+      outputs:
+      - torch.bfloat16
+  Model.div:
+    type: div
+    einsum_equation: ABCD->ABCD
+    elementwise_op: div
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - start.Output
+      outputs:
+      - Model.div.Output
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    operands:
+      Input:
+      - A
+      - B
+      - C
+      - D
+      Output:
+      - A
+      - B
+      - C
+      - D
+    connections:
+      inputs:
+      - start
+      outputs:
+      - Model.tanh
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 32, 4096, 4096), dtype=torch.bfloat16), 30.0],
+      {}]'
+    taco_expression: O0[a,b,c,d] = In0[a,b,c,d]
+  Model.tanh:
+    type: tanh
+    einsum_equation: ABCD->ABCD
+    elementwise_op: tanh
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - Model.div.Output
+      outputs:
+      - Model.tanh.Output
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    operands:
+      Input:
+      - A
+      - B
+      - C
+      - D
+      Output:
+      - A
+      - B
+      - C
+      - D
+    connections:
+      inputs:
+      - Model.div
+      outputs:
+      - Model.mul
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 32, 4096, 4096), dtype=torch.bfloat16)], {}]'
+    taco_expression: O0[a,b,c,d] = tanh(In0[a,b,c,d])
+  Model.mul:
+    type: mul
+    einsum_equation: ABCD->ABCD
+    elementwise_op: mul
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - Model.tanh.Output
+      outputs:
+      - Model.mul.Output
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    operands:
+      Input:
+      - A
+      - B
+      - C
+      - D
+      Output:
+      - A
+      - B
+      - C
+      - D
+    connections:
+      inputs:
+      - Model.tanh
+      outputs:
+      - Model.softmax
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 32, 4096, 4096), dtype=torch.bfloat16), 30.0],
+      {}]'
+    taco_expression: O0[a,b,c,d] = In0[a,b,c,d]
+  Model.softmax:
+    type: softmax
+    einsum_equation: ABCD->ABCD
+    elementwise_op: softmax
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - Model.mul.Output
+      outputs:
+      - Model.softmax.Output
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    operands:
+      Input:
+      - A
+      - B
+      - C
+      - D
+      Output:
+      - A
+      - B
+      - C
+      - D
+    connections:
+      inputs:
+      - Model.mul
+      outputs:
+      - Model.to
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 32, 4096, 4096), dtype=torch.bfloat16)], {dim:
+      -1, _stacklevel: 3, dtype: torch.float32}]'
+    taco_expression: O0[a,b,c,d] = softmax(In0[a,b,c,d])
+  Model.to:
+    type: to
+    einsum_equation: ABCD->ABCD
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - Model.softmax.Output
+      outputs:
+      - Model.to.Output
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+      outputs:
+      - - 1
+        - 32
+        - 4096
+        - 4096
+    operands:
+      Input:
+      - A
+      - B
+      - C
+      - D
+      Output:
+      - A
+      - B
+      - C
+      - D
+    connections:
+      inputs:
+      - Model.softmax
+      outputs: []
+    tensor_dtypes:
+      inputs:
+      - torch.bfloat16
+      outputs:
+      - torch.bfloat16
+    raw_attributes: '[[Tensor(shape=(1, 32, 4096, 4096), dtype=torch.float32), torch.bfloat16],
+      {}]'
+    taco_expression: O0[a,b,c,d] = In0[a,b,c,d]

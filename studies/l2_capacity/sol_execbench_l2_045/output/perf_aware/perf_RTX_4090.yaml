@@ -1,0 +1,75 @@
+arch:
+  name: RTX_4090
+  freq_GHz: 2.52
+  DRAM_byte_per_cycle: 400.0
+  mac_per_cycle_key: MAC_per_cycle_fp16_tc
+  MAC_per_cycle: 65536.0
+  MAC_per_cycle_fp32_sm: 16384.0
+  ridge_point: 163.84
+workload:
+  total_macs: 39031717888
+  total_other_ops: 47848192
+  total_flops: 78063435776
+  bytes_per_element: 2
+unfused:
+  description: Each op in isolation, all tensors from DRAM
+  memory_elements: 285158144
+  memory_bytes: 570316288
+  compute_tc_cycles: 595576
+  compute_sm_cycles: 2920
+  compute_cycles: 595576
+  memory_cycles: 1425790
+  total_cycles: 1425790
+  runtime_ms: 0.5657899682539682
+  arithmetic_intensity: 68.43872200262322
+  bottleneck: memory
+fused:
+  description: Per-op roofline, intermediate tensors excluded
+  memory_elements: 117015615
+  memory_bytes: 234031230
+  compute_tc_cycles: 595576
+  compute_sm_cycles: 2920
+  compute_cycles: 595576
+  memory_cycles: 585078
+  total_cycles: 595576
+  runtime_ms: 0.23633998015873015
+  arithmetic_intensity: 166.77995442585944
+  bottleneck: compute
+fused_prefetched:
+  description: Single roofline for entire graph, perfect overlap
+  memory_elements: 117015615
+  memory_bytes: 234031230
+  compute_tc_cycles: 595576
+  compute_sm_cycles: 2920
+  compute_cycles: 595576
+  memory_cycles: 585078
+  total_cycles: 595576
+  runtime_ms: 0.23633998015873015
+  arithmetic_intensity: 166.77995442585944
+  bottleneck: compute
+memory_breakdown:
+  weight_elements: 0
+  weight_bytes: 0
+  model_io_elements: 47822848
+  model_io_bytes: 95645696
+  intermediate_elements: 237335296
+  intermediate_bytes: 474670592
+cache:
+  description: On-chip (L2/SRAM) capacity model for fused intermediate traffic. spilled_bytes
+    is added to fused/fused_prefetched DRAM totals when the peak live working set
+    exceeds capacity.
+  capacity_aware: true
+  sram_capacity_bytes: 75497472
+  intermediate_peak_live_elements: 53282816
+  intermediate_peak_live_bytes: 106565632
+  intermediate_traffic_bytes: 474670592
+  fits_in_l2: false
+  spill_fraction: 0.29154014682707463
+  spilled_bytes: 138385534
+speedup:
+  fused_vs_unfused: 2.393966386364142
+  fused_prefetched_vs_unfused: 2.393966386364142
+  fused_prefetched_vs_fused: 1.0
+memory_reduction:
+  fused_vs_unfused: 0.5896465960898973
+  fused_prefetched_vs_unfused: 0.5896465960898973

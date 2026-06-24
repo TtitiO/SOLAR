@@ -1,0 +1,75 @@
+arch:
+  name: RTX_4090
+  freq_GHz: 2.52
+  DRAM_byte_per_cycle: 400.0
+  mac_per_cycle_key: MAC_per_cycle_fp16_tc
+  MAC_per_cycle: 65536.0
+  MAC_per_cycle_fp32_sm: 16384.0
+  ridge_point: 163.84
+workload:
+  total_macs: 0
+  total_other_ops: 2147483648
+  total_flops: 0
+  bytes_per_element: 2
+unfused:
+  description: Each op in isolation, all tensors from DRAM
+  memory_elements: 5368709120
+  memory_bytes: 10737418240
+  compute_tc_cycles: 0
+  compute_sm_cycles: 131072
+  compute_cycles: 0
+  memory_cycles: 26843545
+  total_cycles: 26843545
+  runtime_ms: 10.652200634920636
+  arithmetic_intensity: 0.0
+  bottleneck: memory
+fused:
+  description: Per-op roofline, intermediate tensors excluded
+  memory_elements: 1073741824
+  memory_bytes: 2147483648
+  compute_tc_cycles: 0
+  compute_sm_cycles: 131072
+  compute_cycles: 0
+  memory_cycles: 5368709
+  total_cycles: 5368709
+  runtime_ms: 2.130440126984127
+  arithmetic_intensity: 0.0
+  bottleneck: memory
+fused_prefetched:
+  description: Single roofline for entire graph, perfect overlap
+  memory_elements: 1073741824
+  memory_bytes: 2147483648
+  compute_tc_cycles: 0
+  compute_sm_cycles: 131072
+  compute_cycles: 0
+  memory_cycles: 5368709
+  total_cycles: 5368709
+  runtime_ms: 2.130440126984127
+  arithmetic_intensity: 0.0
+  bottleneck: memory
+memory_breakdown:
+  weight_elements: 0
+  weight_bytes: 0
+  model_io_elements: 1073741824
+  model_io_bytes: 2147483648
+  intermediate_elements: 4294967296
+  intermediate_bytes: 8589934592
+cache:
+  description: On-chip (L2/SRAM) capacity model for fused intermediate traffic. spilled_bytes
+    is added to fused/fused_prefetched DRAM totals when the peak live working set
+    exceeds capacity.
+  capacity_aware: false
+  sram_capacity_bytes: 75497472
+  intermediate_peak_live_elements: 1073741824
+  intermediate_peak_live_bytes: 2147483648
+  intermediate_traffic_bytes: 8589934592
+  fits_in_l2: false
+  spill_fraction: 0.96484375
+  spilled_bytes: 0
+speedup:
+  fused_vs_unfused: 5.0
+  fused_prefetched_vs_unfused: 5.0
+  fused_prefetched_vs_fused: 1.0
+memory_reduction:
+  fused_vs_unfused: 0.8
+  fused_prefetched_vs_unfused: 0.8

@@ -1,0 +1,861 @@
+workload:
+  rank_sizes:
+    R0: 1
+    R1: 512
+    R2: 64
+    R3: 64
+    R4: 512
+    R5: 512
+    R6: 512
+    R7: 32
+    R8: 16
+    R9: 1
+    R10: 1
+    R11: 1
+    R12: 1
+    R13: 1
+    R14: 1
+    R15: 4096
+  bits_per_value:
+    All: 32
+  persistent_tensors: weight - Intermediates
+  einsums:
+  - name: start
+    tensor_accesses:
+    - name: start_in
+      projection: &id001
+      - r0
+      - r1
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: start
+      projection: *id001
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_1
+    tensor_accesses:
+    - name: start_1_in
+      projection: &id002
+      - r4
+      bits_per_value: 32
+    - name: start_1
+      projection: *id002
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_2
+    tensor_accesses:
+    - name: start_2_in
+      projection: &id003
+      - r4
+      bits_per_value: 32
+    - name: start_2
+      projection: *id003
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_3
+    tensor_accesses:
+    - name: start_3_in
+      projection: &id004
+      - r5
+      - r4
+      bits_per_value: 32
+    - name: start_3
+      projection: *id004
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_4
+    tensor_accesses:
+    - name: start_4_in
+      projection: &id005
+      - r5
+      bits_per_value: 32
+    - name: start_4
+      projection: *id005
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_5
+    tensor_accesses:
+    - name: start_5_in
+      projection: &id006
+      - r5
+      - r4
+      bits_per_value: 32
+    - name: start_5
+      projection: *id006
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_6
+    tensor_accesses:
+    - name: start_6_in
+      projection: &id007
+      - r5
+      bits_per_value: 32
+    - name: start_6
+      projection: *id007
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_7
+    tensor_accesses:
+    - name: start_7_in
+      projection: &id008
+      - r6
+      - r4
+      bits_per_value: 32
+    - name: start_7
+      projection: *id008
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_8
+    tensor_accesses:
+    - name: start_8_in
+      projection: &id009
+      - r6
+      bits_per_value: 32
+    - name: start_8
+      projection: *id009
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_9
+    tensor_accesses:
+    - name: start_9_in
+      projection: &id010
+      - r1
+      - r6
+      bits_per_value: 32
+    - name: start_9
+      projection: *id010
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_10
+    tensor_accesses:
+    - name: start_10_in
+      projection: &id011
+      - r1
+      bits_per_value: 32
+    - name: start_10
+      projection: *id011
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: Model_view
+    tensor_accesses:
+    - name: start
+      projection:
+      - r0
+      - r1
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_view
+      projection:
+      - r0
+      - r7
+      - r8
+      - r2
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: start
+      output: Model_view
+      weight: Nothing()
+  - name: Model_t
+    tensor_accesses:
+    - name: start_3
+      projection:
+      - r5
+      - r4
+      bits_per_value: 32
+    - name: Model_t
+      projection:
+      - r4
+      - r5
+      output: true
+      bits_per_value: 32
+    renames:
+      input: start_3
+      output: Model_t
+      weight: Nothing()
+  - name: Model_t_1
+    tensor_accesses:
+    - name: start_5
+      projection:
+      - r5
+      - r4
+      bits_per_value: 32
+    - name: Model_t_1
+      projection:
+      - r4
+      - r5
+      output: true
+      bits_per_value: 32
+    renames:
+      input: start_5
+      output: Model_t_1
+      weight: Nothing()
+  - name: Model_t_2
+    tensor_accesses:
+    - name: start_7
+      projection:
+      - r6
+      - r4
+      bits_per_value: 32
+    - name: Model_t_2
+      projection:
+      - r4
+      - r6
+      output: true
+      bits_per_value: 32
+    renames:
+      input: start_7
+      output: Model_t_2
+      weight: Nothing()
+  - name: Model_t_3
+    tensor_accesses:
+    - name: start_9
+      projection:
+      - r1
+      - r6
+      bits_per_value: 32
+    - name: Model_t_3
+      projection:
+      - r6
+      - r1
+      output: true
+      bits_per_value: 32
+    renames:
+      input: start_9
+      output: Model_t_3
+      weight: Nothing()
+  - name: Model_mean
+    tensor_accesses:
+    - name: Model_view
+      projection:
+      - r0
+      - r7
+      - r8
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_mean
+      projection:
+      - r0
+      - r7
+      - r9
+      - r10
+      - r11
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_view
+      output: Model_mean
+      weight: Nothing()
+  - name: Model_var
+    tensor_accesses:
+    - name: Model_view
+      projection:
+      - r0
+      - r7
+      - r8
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_var
+      projection:
+      - r0
+      - r7
+      - r12
+      - r13
+      - r14
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_view
+      output: Model_var
+      weight: Nothing()
+  - name: Model_sub
+    tensor_accesses:
+    - name: Model_view
+      projection:
+      - r0
+      - r7
+      - r8
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_mean
+      projection:
+      - r0
+      - r7
+      - r9
+      - r10
+      - r11
+      bits_per_value: 32
+    - name: Model_sub
+      projection:
+      - r0
+      - r7
+      - r8
+      - r2
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_view
+      output: Model_sub
+      weight: Model_mean
+  - name: Model_add_5
+    tensor_accesses:
+    - name: Model_var
+      projection:
+      - r0
+      - r7
+      - r12
+      - r13
+      - r14
+      bits_per_value: 32
+    - name: Model_add_5
+      projection:
+      - r0
+      - r7
+      - r12
+      - r13
+      - r14
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_var
+      output: Model_add_5
+      weight: Nothing()
+  - name: Model_sqrt
+    tensor_accesses:
+    - name: Model_add_5
+      projection:
+      - r0
+      - r7
+      - r12
+      - r13
+      - r14
+      bits_per_value: 32
+    - name: Model_sqrt
+      projection:
+      - r0
+      - r7
+      - r12
+      - r13
+      - r14
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_add_5
+      output: Model_sqrt
+      weight: Nothing()
+  - name: Model_div
+    tensor_accesses:
+    - name: Model_sub
+      projection:
+      - r0
+      - r7
+      - r8
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_sqrt
+      projection:
+      - r0
+      - r7
+      - r12
+      - r13
+      - r14
+      bits_per_value: 32
+    - name: Model_div
+      projection:
+      - r0
+      - r7
+      - r8
+      - r2
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_sub
+      output: Model_div
+      weight: Model_sqrt
+  - name: Model_view_3
+    tensor_accesses:
+    - name: Model_div
+      projection:
+      - r0
+      - r7
+      - r8
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_view_3
+      projection:
+      - r0
+      - r4
+      - r2
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_div
+      output: Model_view_3
+      weight: Nothing()
+  - name: Model_mul
+    tensor_accesses:
+    - name: Model_view_3
+      projection:
+      - r0
+      - r4
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: start_1
+      projection:
+      - r4
+      bits_per_value: 32
+    - name: Model_mul
+      projection:
+      - r0
+      - r4
+      - r2
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_view_3
+      output: Model_mul
+      weight: start_1
+  - name: Model_add_6
+    tensor_accesses:
+    - name: Model_mul
+      projection:
+      - r0
+      - r4
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: start_2
+      projection:
+      - r4
+      bits_per_value: 32
+    - name: Model_add_6
+      projection:
+      - r0
+      - r4
+      - r2
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_mul
+      output: Model_add_6
+      weight: start_2
+  - name: Model_view_4
+    tensor_accesses:
+    - name: Model_add_6
+      projection:
+      - r0
+      - r4
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_view_4
+      projection:
+      - r0
+      - r4
+      - r15
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_add_6
+      output: Model_view_4
+      weight: Nothing()
+  - name: Model_matmul
+    tensor_accesses:
+    - name: Model_view_4
+      projection:
+      - r0
+      - r4
+      - r15
+      bits_per_value: 32
+    - name: Model_t
+      projection:
+      - r4
+      - r5
+      bits_per_value: 32
+    - name: Model_matmul
+      projection:
+      - r0
+      - r15
+      - r5
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_view_4
+      output: Model_matmul
+      weight: Model_t
+  - name: Model_matmul_1
+    tensor_accesses:
+    - name: Model_view_4
+      projection:
+      - r0
+      - r4
+      - r15
+      bits_per_value: 32
+    - name: Model_t_1
+      projection:
+      - r4
+      - r5
+      bits_per_value: 32
+    - name: Model_matmul_1
+      projection:
+      - r0
+      - r15
+      - r5
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_view_4
+      output: Model_matmul_1
+      weight: Model_t_1
+  - name: Model_matmul_2
+    tensor_accesses:
+    - name: Model_view_4
+      projection:
+      - r0
+      - r4
+      - r15
+      bits_per_value: 32
+    - name: Model_t_2
+      projection:
+      - r4
+      - r6
+      bits_per_value: 32
+    - name: Model_matmul_2
+      projection:
+      - r0
+      - r15
+      - r6
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_view_4
+      output: Model_matmul_2
+      weight: Model_t_2
+  - name: Model_add_1
+    tensor_accesses:
+    - name: Model_matmul
+      projection:
+      - r0
+      - r15
+      - r5
+      bits_per_value: 32
+    - name: start_4
+      projection:
+      - r5
+      bits_per_value: 32
+    - name: Model_add_1
+      projection:
+      - r0
+      - r15
+      - r5
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_matmul
+      output: Model_add_1
+      weight: start_4
+  - name: Model_add_2
+    tensor_accesses:
+    - name: Model_matmul_1
+      projection:
+      - r0
+      - r15
+      - r5
+      bits_per_value: 32
+    - name: start_6
+      projection:
+      - r5
+      bits_per_value: 32
+    - name: Model_add_2
+      projection:
+      - r0
+      - r15
+      - r5
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_matmul_1
+      output: Model_add_2
+      weight: start_6
+  - name: Model_add_3
+    tensor_accesses:
+    - name: Model_matmul_2
+      projection:
+      - r0
+      - r15
+      - r6
+      bits_per_value: 32
+    - name: start_8
+      projection:
+      - r6
+      bits_per_value: 32
+    - name: Model_add_3
+      projection:
+      - r0
+      - r15
+      - r6
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_matmul_2
+      output: Model_add_3
+      weight: start_8
+  - name: Model_bmm
+    tensor_accesses:
+    - name: Model_add_1
+      projection:
+      - r0
+      - r15
+      - r5
+      bits_per_value: 32
+    - name: Model_add_2
+      projection:
+      - r0
+      - r15
+      - r5
+      bits_per_value: 32
+    - name: Model_bmm
+      projection:
+      - r0
+      - r15
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_add_1
+      output: Model_bmm
+      weight: Model_add_2
+  - name: Model_mul_1
+    tensor_accesses:
+    - name: Model_bmm
+      projection:
+      - r0
+      - r15
+      bits_per_value: 32
+    - name: Model_mul_1
+      projection:
+      - r0
+      - r15
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_bmm
+      output: Model_mul_1
+      weight: Nothing()
+  - name: Model_softmax
+    tensor_accesses:
+    - name: Model_mul_1
+      projection:
+      - r0
+      - r15
+      bits_per_value: 32
+    - name: Model_softmax
+      projection:
+      - r0
+      - r15
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_mul_1
+      output: Model_softmax
+      weight: Nothing()
+  - name: Model_bmm_1
+    tensor_accesses:
+    - name: Model_softmax
+      projection:
+      - r0
+      - r15
+      bits_per_value: 32
+    - name: Model_add_3
+      projection:
+      - r0
+      - r15
+      - r6
+      bits_per_value: 32
+    - name: Model_bmm_1
+      projection:
+      - r0
+      - r15
+      - r6
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_softmax
+      output: Model_bmm_1
+      weight: Model_add_3
+  - name: Model_matmul_3
+    tensor_accesses:
+    - name: Model_bmm_1
+      projection:
+      - r0
+      - r15
+      - r6
+      bits_per_value: 32
+    - name: Model_t_3
+      projection:
+      - r6
+      - r1
+      bits_per_value: 32
+    - name: Model_matmul_3
+      projection:
+      - r0
+      - r15
+      - r1
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_bmm_1
+      output: Model_matmul_3
+      weight: Model_t_3
+  - name: Model_add_4
+    tensor_accesses:
+    - name: Model_matmul_3
+      projection:
+      - r0
+      - r15
+      - r1
+      bits_per_value: 32
+    - name: start_10
+      projection:
+      - r1
+      bits_per_value: 32
+    - name: Model_add_4
+      projection:
+      - r0
+      - r15
+      - r1
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_matmul_3
+      output: Model_add_4
+      weight: start_10
+  - name: Model_view_5
+    tensor_accesses:
+    - name: Model_add_4
+      projection:
+      - r0
+      - r15
+      - r1
+      bits_per_value: 32
+    - name: Model_view_5
+      projection:
+      - r0
+      - r1
+      - r2
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Model_add_4
+      output: Model_view_5
+      weight: Nothing()
+  - name: Model_add
+    tensor_accesses:
+    - name: start
+      projection:
+      - r0
+      - r1
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_view_5
+      projection:
+      - r0
+      - r1
+      - r2
+      - r3
+      bits_per_value: 32
+    - name: Model_add
+      projection:
+      - r0
+      - r1
+      - r2
+      - r3
+      output: true
+      bits_per_value: 32
+    renames:
+      input: start
+      output: Model_add
+      weight: Model_view_5
+renames:
+  einsums:
+  - name: default
+    tensor_accesses:
+    - name: input
+      source: Inputs & Intermediates
+      expected_count: 1
+    - name: output
+      source: Outputs
+      expected_count: 1
+    - name: weight
+      source: ~(input | output)
+      expected_count: 1

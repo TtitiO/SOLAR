@@ -1,0 +1,218 @@
+layers:
+  Model.matmul:
+    type: matmul
+    einsum_equation: B0B1MK,B0B1KN->B0B1MN
+    is_real_einsum: true
+    macs: 5368709120
+    other_ops: 0
+    flops: 10737418240
+    unfused_elements: 89128960
+    orojenesis_elements: null
+    fused_elements: 89128960
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 20
+        - 2048
+        - 2048
+      - - 1
+        - 20
+        - 2048
+        - 64
+      outputs:
+      - - 1
+        - 20
+        - 2048
+        - 64
+    tensor_sizes:
+      inputs:
+      - 83886080
+      - 2621440
+      outputs:
+      - 2621440
+    memory_elements:
+      inputs:
+      - 83886080
+      - 2621440
+      outputs:
+      - 2621440
+    tensor_types:
+      inputs:
+      - input
+      - input
+      outputs:
+      - output
+    input_elements: 86507520
+    output_elements: 2621440
+    intermediate_elements: 0
+    model_io_elements: 89128960
+    input_is_intermediate: false
+    output_is_intermediate: false
+    is_orphaned: false
+    connections:
+      inputs:
+      - start
+      - start_1
+      outputs:
+      - Model.transpose
+  Model.transpose:
+    type: transpose
+    einsum_equation: ABCD->ACBD
+    is_real_einsum: false
+    macs: 0
+    other_ops: 0
+    flops: 0
+    unfused_elements: 0
+    orojenesis_elements: null
+    fused_elements: 0
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 20
+        - 2048
+        - 64
+      outputs:
+      - - 1
+        - 2048
+        - 20
+        - 64
+    tensor_sizes:
+      inputs:
+      - 2621440
+      outputs:
+      - 2621440
+    memory_elements:
+      inputs:
+      - 0
+      outputs:
+      - 0
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    input_elements: 0
+    output_elements: 0
+    intermediate_elements: 0
+    model_io_elements: 0
+    input_is_intermediate: false
+    output_is_intermediate: false
+    is_orphaned: false
+    connections:
+      inputs:
+      - Model.matmul
+      outputs:
+      - Model.contiguous
+  Model.contiguous:
+    type: contiguous
+    einsum_equation: ABCD->ABCD
+    is_real_einsum: false
+    macs: 0
+    other_ops: 0
+    flops: 0
+    unfused_elements: 0
+    orojenesis_elements: null
+    fused_elements: 0
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 2048
+        - 20
+        - 64
+      outputs:
+      - - 1
+        - 2048
+        - 20
+        - 64
+    tensor_sizes:
+      inputs:
+      - 2621440
+      outputs:
+      - 2621440
+    memory_elements:
+      inputs:
+      - 0
+      outputs:
+      - 0
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    input_elements: 0
+    output_elements: 0
+    intermediate_elements: 0
+    model_io_elements: 0
+    input_is_intermediate: false
+    output_is_intermediate: false
+    is_orphaned: false
+    connections:
+      inputs:
+      - Model.transpose
+      outputs:
+      - Model.reshape
+  Model.reshape:
+    type: reshape
+    einsum_equation: ABCD->ABR0
+    is_real_einsum: false
+    macs: 0
+    other_ops: 0
+    flops: 0
+    unfused_elements: 0
+    orojenesis_elements: null
+    fused_elements: 0
+    tensor_shapes:
+      inputs:
+      - - 1
+        - 2048
+        - 20
+        - 64
+      outputs:
+      - - 1
+        - 2048
+        - 1280
+    tensor_sizes:
+      inputs:
+      - 2621440
+      outputs:
+      - 2621440
+    memory_elements:
+      inputs:
+      - 0
+      outputs:
+      - 0
+    tensor_types:
+      inputs:
+      - input
+      outputs:
+      - output
+    input_elements: 0
+    output_elements: 0
+    intermediate_elements: 0
+    model_io_elements: 0
+    input_is_intermediate: false
+    output_is_intermediate: false
+    is_orphaned: false
+    connections:
+      inputs:
+      - Model.contiguous
+      outputs: []
+total:
+  num_layers: 4
+  num_start_nodes_filtered: 2
+  macs: 5368709120
+  other_ops: 0
+  flops: 10737418240
+  unfused_elements: 89128960
+  orojenesis_elements: null
+  fused_elements: 89128960
+  fused_prefetched_elements: 89128960
+  model_io_elements: 89128960
+  intermediate_elements: 0
+  intermediate_peak_live_elements: 5242880
+  num_intermediate_tensors: 3
+  num_orphaned_layers: 0
+metadata:
+  precision: fp16
+  bytes_per_element: 2
+  source_graph: /home/tinglin/wksp/SOLAR/studies/l2_capacity/sol_execbench_l1_083/output/einsum/einsum_graph_renamed.yaml

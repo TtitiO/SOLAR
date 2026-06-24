@@ -1,0 +1,3533 @@
+model_name: model
+layers:
+  Model.auxiliary-tensor:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 1
+      - 2048
+      - 1024
+    input_dtypes: []
+    output_dtypes:
+    - torch.float32
+    input_types: []
+    output_types:
+    - output
+    - output
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor
+    connections:
+      inputs: []
+      outputs:
+      - Model.matmul
+      - Model.matmul_1
+      - Model.matmul_2
+  Model.matmul:
+    type: matmul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 1024
+    - - 1024
+      - 1024
+    output_shapes:
+    - - 1
+      - 2048
+      - 1024
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: matmul
+      raw_attributes: '[[Tensor(shape=(1, 2048, 1024), dtype=torch.float32), Tensor(shape=(1024,
+        1024), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.Model.matmul
+    connections:
+      inputs:
+      - Model.auxiliary-tensor
+      - Model.hidden-tensor
+      outputs:
+      - Model.hidden-tensor_1
+  Model.matmul_1:
+    type: matmul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 1024
+    - - 1024
+      - 256
+    output_shapes:
+    - - 1
+      - 2048
+      - 256
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: matmul
+      raw_attributes: '[[Tensor(shape=(1, 2048, 1024), dtype=torch.float32), Tensor(shape=(1024,
+        256), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.Model.matmul_1
+    connections:
+      inputs:
+      - Model.auxiliary-tensor
+      - Model.hidden-tensor_2
+      outputs:
+      - Model.hidden-tensor_3
+  Model.matmul_2:
+    type: matmul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 1024
+    - - 1024
+      - 256
+    output_shapes:
+    - - 1
+      - 2048
+      - 256
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: matmul
+      raw_attributes: '[[Tensor(shape=(1, 2048, 1024), dtype=torch.float32), Tensor(shape=(1024,
+        256), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.Model.matmul_2
+    connections:
+      inputs:
+      - Model.auxiliary-tensor
+      - Model.hidden-tensor_4
+      outputs:
+      - Model.hidden-tensor_5
+  Model.auxiliary-tensor_1:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 1
+      - 2048
+    input_dtypes:
+    - torch.int64
+    output_dtypes:
+    - torch.int64
+    input_types: []
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor_1
+    connections:
+      inputs: []
+      outputs:
+      - Model.__getitem__
+  Model.__getitem__:
+    type: __getitem__
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+    output_shapes:
+    - - 1
+      - 1
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: __getitem__
+      raw_attributes: '[[Tensor(shape=(1, 2048), dtype=torch.int64), [slice(None,
+        None, None), None, slice(None, None, None)]], {}]'
+      hierarchical_name: Model.Model.__getitem__
+    connections:
+      inputs:
+      - Model.auxiliary-tensor_1
+      outputs:
+      - Model.hidden-tensor_15
+  Model.auxiliary-tensor_2:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 1024
+      - 1024
+    input_dtypes: []
+    output_dtypes:
+    - torch.float32
+    input_types: []
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor_2
+    connections:
+      inputs: []
+      outputs:
+      - Model.t
+  Model.t:
+    type: t
+    node_class: FunctionNode
+    input_shapes:
+    - - 1024
+      - 1024
+    output_shapes:
+    - - 1024
+      - 1024
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: t
+      raw_attributes: '[[Tensor(shape=(1024, 1024), dtype=torch.float32)], {}]'
+      dim0: 0
+      dim1: 1
+      transpose_dims:
+      - 1
+      - 0
+      hierarchical_name: Model.Model.t
+    connections:
+      inputs:
+      - Model.auxiliary-tensor_2
+      outputs:
+      - Model.hidden-tensor
+  Model.auxiliary-tensor_3:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 256
+      - 1024
+    input_dtypes: []
+    output_dtypes:
+    - torch.float32
+    input_types: []
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor_3
+    connections:
+      inputs: []
+      outputs:
+      - Model.t_1
+  Model.t_1:
+    type: t
+    node_class: FunctionNode
+    input_shapes:
+    - - 256
+      - 1024
+    output_shapes:
+    - - 1024
+      - 256
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: t
+      raw_attributes: '[[Tensor(shape=(256, 1024), dtype=torch.float32)], {}]'
+      dim0: 0
+      dim1: 1
+      transpose_dims:
+      - 1
+      - 0
+      hierarchical_name: Model.Model.t_1
+    connections:
+      inputs:
+      - Model.auxiliary-tensor_3
+      outputs:
+      - Model.hidden-tensor_2
+  Model.auxiliary-tensor_4:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 256
+      - 1024
+    input_dtypes: []
+    output_dtypes:
+    - torch.float32
+    input_types: []
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor_4
+    connections:
+      inputs: []
+      outputs:
+      - Model.t_2
+  Model.t_2:
+    type: t
+    node_class: FunctionNode
+    input_shapes:
+    - - 256
+      - 1024
+    output_shapes:
+    - - 1024
+      - 256
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: t
+      raw_attributes: '[[Tensor(shape=(256, 1024), dtype=torch.float32)], {}]'
+      dim0: 0
+      dim1: 1
+      transpose_dims:
+      - 1
+      - 0
+      hierarchical_name: Model.Model.t_2
+    connections:
+      inputs:
+      - Model.auxiliary-tensor_4
+      outputs:
+      - Model.hidden-tensor_4
+  Model.auxiliary-tensor_5:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 1024
+      - 1024
+    input_dtypes: []
+    output_dtypes:
+    - torch.float32
+    input_types: []
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor_5
+    connections:
+      inputs: []
+      outputs:
+      - Model.t_3
+  Model.t_3:
+    type: t
+    node_class: FunctionNode
+    input_shapes:
+    - - 1024
+      - 1024
+    output_shapes:
+    - - 1024
+      - 1024
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: t
+      raw_attributes: '[[Tensor(shape=(1024, 1024), dtype=torch.float32)], {}]'
+      dim0: 0
+      dim1: 1
+      transpose_dims:
+      - 1
+      - 0
+      hierarchical_name: Model.Model.t_3
+    connections:
+      inputs:
+      - Model.auxiliary-tensor_5
+      outputs:
+      - Model.hidden-tensor_54
+  Model.auxiliary-tensor_6:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 32
+    input_dtypes: []
+    output_dtypes:
+    - torch.float32
+    input_types: []
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor_6
+    connections:
+      inputs: []
+      outputs:
+      - Model.__getitem___1
+  Model.__getitem___1:
+    type: __getitem__
+    node_class: FunctionNode
+    input_shapes:
+    - - 32
+    output_shapes:
+    - - 1
+      - 32
+      - 1
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: __getitem__
+      raw_attributes: '[[Tensor(shape=(32,), dtype=torch.float32), [None, slice(None,
+        None, None), None]], {}]'
+      hierarchical_name: Model.Model.__getitem___1
+    connections:
+      inputs:
+      - Model.auxiliary-tensor_6
+      outputs:
+      - Model.hidden-tensor_12
+  Model.hidden-tensor:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1024
+      - 1024
+    output_shapes:
+    - - 1024
+      - 1024
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor
+    connections:
+      inputs:
+      - Model.t
+      outputs:
+      - Model.matmul
+  Model.hidden-tensor_1:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 1024
+    output_shapes:
+    - - 1
+      - 2048
+      - 1024
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_1
+    connections:
+      inputs:
+      - Model.matmul
+      outputs:
+      - Model.view
+  Model.view:
+    type: view
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 1024
+    output_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: view
+      raw_attributes: '[[Tensor(shape=(1, 2048, 1024), dtype=torch.float32), 1, 2048,
+        16, 64], {}]'
+      target_shape:
+      - 1
+      - 2048
+      - 16
+      - 64
+      hierarchical_name: Model.view
+    connections:
+      inputs:
+      - Model.hidden-tensor_1
+      outputs:
+      - Model.hidden-tensor_6
+  Model.hidden-tensor_2:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1024
+      - 256
+    output_shapes:
+    - - 1024
+      - 256
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_2
+    connections:
+      inputs:
+      - Model.t_1
+      outputs:
+      - Model.matmul_1
+  Model.hidden-tensor_3:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 256
+    output_shapes:
+    - - 1
+      - 2048
+      - 256
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_3
+    connections:
+      inputs:
+      - Model.matmul_1
+      outputs:
+      - Model.view_1
+  Model.view_1:
+    type: view
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 256
+    output_shapes:
+    - - 1
+      - 2048
+      - 4
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: view
+      raw_attributes: '[[Tensor(shape=(1, 2048, 256), dtype=torch.float32), 1, 2048,
+        4, 64], {}]'
+      target_shape:
+      - 1
+      - 2048
+      - 4
+      - 64
+      hierarchical_name: Model.view_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_3
+      outputs:
+      - Model.hidden-tensor_8
+  Model.hidden-tensor_4:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1024
+      - 256
+    output_shapes:
+    - - 1024
+      - 256
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_4
+    connections:
+      inputs:
+      - Model.t_2
+      outputs:
+      - Model.matmul_2
+  Model.hidden-tensor_5:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 256
+    output_shapes:
+    - - 1
+      - 2048
+      - 256
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_5
+    connections:
+      inputs:
+      - Model.matmul_2
+      outputs:
+      - Model.view_2
+  Model.view_2:
+    type: view
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 256
+    output_shapes:
+    - - 1
+      - 2048
+      - 4
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: view
+      raw_attributes: '[[Tensor(shape=(1, 2048, 256), dtype=torch.float32), 1, 2048,
+        4, 64], {}]'
+      target_shape:
+      - 1
+      - 2048
+      - 4
+      - 64
+      hierarchical_name: Model.view_2
+    connections:
+      inputs:
+      - Model.hidden-tensor_5
+      outputs:
+      - Model.hidden-tensor_10
+  Model.hidden-tensor_6:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_6
+    connections:
+      inputs:
+      - Model.view
+      outputs:
+      - Model.transpose
+  Model.transpose:
+    type: transpose
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: transpose
+      raw_attributes: '[[Tensor(shape=(1, 2048, 16, 64), dtype=torch.float32), 1,
+        2], {}]'
+      dim0: 1
+      dim1: 2
+      transpose_dims:
+      - 1
+      - 2
+      hierarchical_name: Model.transpose
+    connections:
+      inputs:
+      - Model.hidden-tensor_6
+      outputs:
+      - Model.hidden-tensor_7
+  Model.hidden-tensor_7:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    - output
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_7
+    connections:
+      inputs:
+      - Model.transpose
+      outputs:
+      - Model.__getitem___2
+      - Model.__getitem___3
+      - Model.mul
+  Model.__getitem___2:
+    type: __getitem__
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: __getitem__
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 64), dtype=torch.float32), [Ellipsis,
+        slice(None, 32, None)]], {}]'
+      hierarchical_name: Model.__getitem__
+    connections:
+      inputs:
+      - Model.hidden-tensor_7
+      outputs:
+      - Model.hidden-tensor_26
+  Model.__getitem___3:
+    type: __getitem__
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: __getitem__
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 64), dtype=torch.float32), [Ellipsis,
+        slice(32, None, None)]], {}]'
+      hierarchical_name: Model.__getitem___1
+    connections:
+      inputs:
+      - Model.hidden-tensor_7
+      outputs:
+      - Model.hidden-tensor_27
+  Model.mul:
+    type: mul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    - - 1
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: mul
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 64), dtype=torch.float32), Tensor(shape=(1,
+        1, 2048, 64), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.mul
+    connections:
+      inputs:
+      - Model.hidden-tensor_7
+      - Model.hidden-tensor_24
+      outputs:
+      - Model.hidden-tensor_30
+  Model.hidden-tensor_8:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 4
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 4
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_8
+    connections:
+      inputs:
+      - Model.view_1
+      outputs:
+      - Model.transpose_1
+  Model.transpose_1:
+    type: transpose
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 4
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: transpose
+      raw_attributes: '[[Tensor(shape=(1, 2048, 4, 64), dtype=torch.float32), 1, 2],
+        {}]'
+      dim0: 1
+      dim1: 2
+      transpose_dims:
+      - 1
+      - 2
+      hierarchical_name: Model.transpose_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_8
+      outputs:
+      - Model.hidden-tensor_9
+  Model.hidden-tensor_9:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    - output
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_9
+    connections:
+      inputs:
+      - Model.transpose_1
+      outputs:
+      - Model.__getitem___4
+      - Model.__getitem___5
+      - Model.mul_1
+  Model.__getitem___4:
+    type: __getitem__
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: __getitem__
+      raw_attributes: '[[Tensor(shape=(1, 4, 2048, 64), dtype=torch.float32), [Ellipsis,
+        slice(None, 32, None)]], {}]'
+      hierarchical_name: Model.__getitem___2
+    connections:
+      inputs:
+      - Model.hidden-tensor_9
+      outputs:
+      - Model.hidden-tensor_33
+  Model.__getitem___5:
+    type: __getitem__
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: __getitem__
+      raw_attributes: '[[Tensor(shape=(1, 4, 2048, 64), dtype=torch.float32), [Ellipsis,
+        slice(32, None, None)]], {}]'
+      hierarchical_name: Model.__getitem___3
+    connections:
+      inputs:
+      - Model.hidden-tensor_9
+      outputs:
+      - Model.hidden-tensor_34
+  Model.mul_1:
+    type: mul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    - - 1
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: mul
+      raw_attributes: '[[Tensor(shape=(1, 4, 2048, 64), dtype=torch.float32), Tensor(shape=(1,
+        1, 2048, 64), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.mul_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_9
+      - Model.hidden-tensor_24
+      outputs:
+      - Model.hidden-tensor_37
+  Model.hidden-tensor_10:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 4
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 4
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_10
+    connections:
+      inputs:
+      - Model.view_2
+      outputs:
+      - Model.transpose_2
+  Model.transpose_2:
+    type: transpose
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 4
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: transpose
+      raw_attributes: '[[Tensor(shape=(1, 2048, 4, 64), dtype=torch.float32), 1, 2],
+        {}]'
+      dim0: 1
+      dim1: 2
+      transpose_dims:
+      - 1
+      - 2
+      hierarchical_name: Model.transpose_2
+    connections:
+      inputs:
+      - Model.hidden-tensor_10
+      outputs:
+      - Model.hidden-tensor_11
+  Model.hidden-tensor_11:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_11
+    connections:
+      inputs:
+      - Model.transpose_2
+      outputs:
+      - Model.__getitem___6
+  Model.__getitem___6:
+    type: __getitem__
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: __getitem__
+      raw_attributes: '[[Tensor(shape=(1, 4, 2048, 64), dtype=torch.float32), [slice(None,
+        None, None), slice(None, None, None), None, slice(None, None, None), slice(None,
+        None, None)]], {}]'
+      hierarchical_name: Model.__getitem___4
+    connections:
+      inputs:
+      - Model.hidden-tensor_11
+      outputs:
+      - Model.hidden-tensor_43
+  Model.hidden-tensor_12:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 32
+      - 1
+    output_shapes:
+    - - 1
+      - 32
+      - 1
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_12
+    connections:
+      inputs:
+      - Model.__getitem___1
+      outputs:
+      - Model.float
+  Model.float:
+    type: float
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 32
+      - 1
+    output_shapes:
+    - - 1
+      - 32
+      - 1
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: float
+      raw_attributes: '[[Tensor(shape=(1, 32, 1), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.float
+    connections:
+      inputs:
+      - Model.hidden-tensor_12
+      outputs:
+      - Model.hidden-tensor_13
+  Model.hidden-tensor_13:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 32
+      - 1
+    output_shapes:
+    - - 1
+      - 32
+      - 1
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_13
+    connections:
+      inputs:
+      - Model.float
+      outputs:
+      - Model.expand
+  Model.expand:
+    type: expand
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 32
+      - 1
+    output_shapes:
+    - - 1
+      - 32
+      - 1
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: expand
+      hierarchical_name: Model.expand
+    connections:
+      inputs:
+      - Model.hidden-tensor_13
+      outputs:
+      - Model.hidden-tensor_14
+  Model.hidden-tensor_14:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 32
+      - 1
+    output_shapes:
+    - - 1
+      - 32
+      - 1
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_14
+    connections:
+      inputs:
+      - Model.expand
+      outputs:
+      - Model.matmul_3
+  Model.matmul_3:
+    type: matmul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 32
+      - 1
+    - - 1
+      - 1
+      - 2048
+    output_shapes:
+    - - 1
+      - 32
+      - 2048
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: matmul
+      hierarchical_name: Model.matmul
+    connections:
+      inputs:
+      - Model.hidden-tensor_14
+      - Model.hidden-tensor_16
+      outputs:
+      - Model.hidden-tensor_17
+  Model.hidden-tensor_15:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 1
+      - 2048
+    output_shapes:
+    - - 1
+      - 1
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_15
+    connections:
+      inputs:
+      - Model.__getitem__
+      outputs:
+      - Model.float_1
+  Model.float_1:
+    type: float
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 1
+      - 2048
+    output_shapes:
+    - - 1
+      - 1
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: float
+      raw_attributes: '[[Tensor(shape=(1, 1, 2048), dtype=torch.int64)], {}]'
+      hierarchical_name: Model.float_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_15
+      outputs:
+      - Model.hidden-tensor_16
+  Model.hidden-tensor_16:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 1
+      - 2048
+    output_shapes:
+    - - 1
+      - 1
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_16
+    connections:
+      inputs:
+      - Model.float_1
+      outputs:
+      - Model.matmul_3
+  Model.hidden-tensor_17:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 32
+      - 2048
+    output_shapes:
+    - - 1
+      - 32
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_17
+    connections:
+      inputs:
+      - Model.matmul_3
+      outputs:
+      - Model.transpose_3
+  Model.transpose_3:
+    type: transpose
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 32
+      - 2048
+    output_shapes:
+    - - 1
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: transpose
+      hierarchical_name: Model.transpose_3
+    connections:
+      inputs:
+      - Model.hidden-tensor_17
+      outputs:
+      - Model.hidden-tensor_18
+  Model.hidden-tensor_18:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_18
+    connections:
+      inputs:
+      - Model.transpose_3
+      outputs:
+      - Model.cat
+  Model.cat:
+    type: cat
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 32
+    - - 1
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: cat
+      hierarchical_name: Model.cat
+    connections:
+      inputs:
+      - Model.hidden-tensor_18
+      - Model.hidden-tensor_18
+      outputs:
+      - Model.hidden-tensor_19
+  Model.hidden-tensor_19:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_19
+    connections:
+      inputs:
+      - Model.cat
+      outputs:
+      - Model.cos
+      - Model.sin
+  Model.cos:
+    type: cos
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: cos
+      hierarchical_name: Model.cos
+    connections:
+      inputs:
+      - Model.hidden-tensor_19
+      outputs:
+      - Model.hidden-tensor_20
+  Model.sin:
+    type: sin
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: sin
+      hierarchical_name: Model.sin
+    connections:
+      inputs:
+      - Model.hidden-tensor_19
+      outputs:
+      - Model.hidden-tensor_22
+  Model.hidden-tensor_20:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_20
+    connections:
+      inputs:
+      - Model.cos
+      outputs:
+      - Model.mul_2
+  Model.mul_2:
+    type: mul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: mul
+      hierarchical_name: Model.mul_2
+    connections:
+      inputs:
+      - Model.hidden-tensor_20
+      outputs:
+      - Model.hidden-tensor_21
+  Model.hidden-tensor_21:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_21
+    connections:
+      inputs:
+      - Model.mul_2
+      outputs:
+      - Model.unsqueeze
+  Model.unsqueeze:
+    type: unsqueeze
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: unsqueeze
+      hierarchical_name: Model.unsqueeze
+    connections:
+      inputs:
+      - Model.hidden-tensor_21
+      outputs:
+      - Model.hidden-tensor_24
+  Model.hidden-tensor_22:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_22
+    connections:
+      inputs:
+      - Model.sin
+      outputs:
+      - Model.mul_3
+  Model.mul_3:
+    type: mul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: mul
+      hierarchical_name: Model.mul_3
+    connections:
+      inputs:
+      - Model.hidden-tensor_22
+      outputs:
+      - Model.hidden-tensor_23
+  Model.hidden-tensor_23:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_23
+    connections:
+      inputs:
+      - Model.mul_3
+      outputs:
+      - Model.unsqueeze_1
+  Model.unsqueeze_1:
+    type: unsqueeze
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: unsqueeze
+      hierarchical_name: Model.unsqueeze_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_23
+      outputs:
+      - Model.hidden-tensor_25
+  Model.hidden-tensor_24:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_24
+    connections:
+      inputs:
+      - Model.unsqueeze
+      outputs:
+      - Model.mul
+      - Model.mul_1
+  Model.hidden-tensor_25:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_25
+    connections:
+      inputs:
+      - Model.unsqueeze_1
+      outputs:
+      - Model.mul_4
+      - Model.mul_5
+  Model.mul_4:
+    type: mul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    - - 1
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: mul
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 64), dtype=torch.float32), Tensor(shape=(1,
+        1, 2048, 64), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.mul_4
+    connections:
+      inputs:
+      - Model.hidden-tensor_29
+      - Model.hidden-tensor_25
+      outputs:
+      - Model.hidden-tensor_31
+  Model.mul_5:
+    type: mul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    - - 1
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: mul
+      raw_attributes: '[[Tensor(shape=(1, 4, 2048, 64), dtype=torch.float32), Tensor(shape=(1,
+        1, 2048, 64), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.mul_5
+    connections:
+      inputs:
+      - Model.hidden-tensor_36
+      - Model.hidden-tensor_25
+      outputs:
+      - Model.hidden-tensor_38
+  Model.hidden-tensor_26:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_26
+    connections:
+      inputs:
+      - Model.__getitem___2
+      outputs:
+      - Model.cat_1
+  Model.cat_1:
+    type: cat
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    - - 1
+      - 16
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: cat
+      raw_attributes: '[[[Tensor(shape=(1, 16, 2048, 32), dtype=torch.float32), Tensor(shape=(1,
+        16, 2048, 32), dtype=torch.float32)]], {dim: -1}]'
+      hierarchical_name: Model.cat_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_28
+      - Model.hidden-tensor_26
+      outputs:
+      - Model.hidden-tensor_29
+  Model.hidden-tensor_27:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_27
+    connections:
+      inputs:
+      - Model.__getitem___3
+      outputs:
+      - Model.neg
+  Model.neg:
+    type: neg
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: neg
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 32), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.neg
+    connections:
+      inputs:
+      - Model.hidden-tensor_27
+      outputs:
+      - Model.hidden-tensor_28
+  Model.hidden-tensor_28:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_28
+    connections:
+      inputs:
+      - Model.neg
+      outputs:
+      - Model.cat_1
+  Model.hidden-tensor_29:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_29
+    connections:
+      inputs:
+      - Model.cat_1
+      outputs:
+      - Model.mul_4
+  Model.hidden-tensor_30:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_30
+    connections:
+      inputs:
+      - Model.mul
+      outputs:
+      - Model.add
+  Model.add:
+    type: add
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: add
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 64), dtype=torch.float32), Tensor(shape=(1,
+        16, 2048, 64), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.add
+    connections:
+      inputs:
+      - Model.hidden-tensor_30
+      - Model.hidden-tensor_31
+      outputs:
+      - Model.hidden-tensor_32
+  Model.hidden-tensor_31:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_31
+    connections:
+      inputs:
+      - Model.mul_4
+      outputs:
+      - Model.add
+  Model.hidden-tensor_32:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_32
+    connections:
+      inputs:
+      - Model.add
+      outputs:
+      - Model.matmul_4
+  Model.matmul_4:
+    type: matmul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    - - 1
+      - 16
+      - 64
+      - 2048
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: matmul
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 64), dtype=torch.float32), Tensor(shape=(1,
+        16, 64, 2048), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.matmul_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_32
+      - Model.hidden-tensor_46
+      outputs:
+      - Model.hidden-tensor_47
+  Model.hidden-tensor_33:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_33
+    connections:
+      inputs:
+      - Model.__getitem___4
+      outputs:
+      - Model.cat_2
+  Model.cat_2:
+    type: cat
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    - - 1
+      - 4
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: cat
+      raw_attributes: '[[[Tensor(shape=(1, 4, 2048, 32), dtype=torch.float32), Tensor(shape=(1,
+        4, 2048, 32), dtype=torch.float32)]], {dim: -1}]'
+      hierarchical_name: Model.cat_2
+    connections:
+      inputs:
+      - Model.hidden-tensor_35
+      - Model.hidden-tensor_33
+      outputs:
+      - Model.hidden-tensor_36
+  Model.hidden-tensor_34:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_34
+    connections:
+      inputs:
+      - Model.__getitem___5
+      outputs:
+      - Model.neg_1
+  Model.neg_1:
+    type: neg
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: neg
+      raw_attributes: '[[Tensor(shape=(1, 4, 2048, 32), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.neg_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_34
+      outputs:
+      - Model.hidden-tensor_35
+  Model.hidden-tensor_35:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 32
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_35
+    connections:
+      inputs:
+      - Model.neg_1
+      outputs:
+      - Model.cat_2
+  Model.hidden-tensor_36:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_36
+    connections:
+      inputs:
+      - Model.cat_2
+      outputs:
+      - Model.mul_5
+  Model.hidden-tensor_37:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_37
+    connections:
+      inputs:
+      - Model.mul_1
+      outputs:
+      - Model.add_1
+  Model.add_1:
+    type: add
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: add
+      raw_attributes: '[[Tensor(shape=(1, 4, 2048, 64), dtype=torch.float32), Tensor(shape=(1,
+        4, 2048, 64), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.add_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_37
+      - Model.hidden-tensor_38
+      outputs:
+      - Model.hidden-tensor_39
+  Model.hidden-tensor_38:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_38
+    connections:
+      inputs:
+      - Model.mul_5
+      outputs:
+      - Model.add_1
+  Model.hidden-tensor_39:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_39
+    connections:
+      inputs:
+      - Model.add_1
+      outputs:
+      - Model.__getitem___7
+  Model.__getitem___7:
+    type: __getitem__
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: __getitem__
+      raw_attributes: '[[Tensor(shape=(1, 4, 2048, 64), dtype=torch.float32), [slice(None,
+        None, None), slice(None, None, None), None, slice(None, None, None), slice(None,
+        None, None)]], {}]'
+      hierarchical_name: Model.__getitem___5
+    connections:
+      inputs:
+      - Model.hidden-tensor_39
+      outputs:
+      - Model.hidden-tensor_40
+  Model.hidden-tensor_40:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_40
+    connections:
+      inputs:
+      - Model.__getitem___7
+      outputs:
+      - Model.expand_1
+  Model.expand_1:
+    type: expand
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: expand
+      raw_attributes: '[[Tensor(shape=(1, 4, 1, 2048, 64), dtype=torch.float32), 1,
+        4, 4, 2048, 64], {}]'
+      hierarchical_name: Model.expand_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_40
+      outputs:
+      - Model.hidden-tensor_41
+  Model.hidden-tensor_41:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_41
+    connections:
+      inputs:
+      - Model.expand_1
+      outputs:
+      - Model.reshape
+  Model.reshape:
+    type: reshape
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: reshape
+      raw_attributes: '[[Tensor(shape=(1, 4, 4, 2048, 64), dtype=torch.float32), 1,
+        16, 2048, 64], {}]'
+      target_shape:
+      - 1
+      - 16
+      - 2048
+      - 64
+      hierarchical_name: Model.reshape
+    connections:
+      inputs:
+      - Model.hidden-tensor_41
+      outputs:
+      - Model.hidden-tensor_42
+  Model.hidden-tensor_42:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_42
+    connections:
+      inputs:
+      - Model.reshape
+      outputs:
+      - Model.transpose_4
+  Model.transpose_4:
+    type: transpose
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 64
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: transpose
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 64), dtype=torch.float32), 2,
+        3], {}]'
+      dim0: 2
+      dim1: 3
+      transpose_dims:
+      - 2
+      - 3
+      hierarchical_name: Model.transpose_4
+    connections:
+      inputs:
+      - Model.hidden-tensor_42
+      outputs:
+      - Model.hidden-tensor_46
+  Model.hidden-tensor_43:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 1
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_43
+    connections:
+      inputs:
+      - Model.__getitem___6
+      outputs:
+      - Model.expand_2
+  Model.expand_2:
+    type: expand
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 1
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: expand
+      raw_attributes: '[[Tensor(shape=(1, 4, 1, 2048, 64), dtype=torch.float32), 1,
+        4, 4, 2048, 64], {}]'
+      hierarchical_name: Model.expand_2
+    connections:
+      inputs:
+      - Model.hidden-tensor_43
+      outputs:
+      - Model.hidden-tensor_44
+  Model.hidden-tensor_44:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 4
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 4
+      - 4
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_44
+    connections:
+      inputs:
+      - Model.expand_2
+      outputs:
+      - Model.reshape_1
+  Model.reshape_1:
+    type: reshape
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 4
+      - 4
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: reshape
+      raw_attributes: '[[Tensor(shape=(1, 4, 4, 2048, 64), dtype=torch.float32), 1,
+        16, 2048, 64], {}]'
+      target_shape:
+      - 1
+      - 16
+      - 2048
+      - 64
+      hierarchical_name: Model.reshape_1
+    connections:
+      inputs:
+      - Model.hidden-tensor_44
+      outputs:
+      - Model.hidden-tensor_45
+  Model.hidden-tensor_45:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_45
+    connections:
+      inputs:
+      - Model.reshape_1
+      outputs:
+      - Model.matmul_5
+  Model.matmul_5:
+    type: matmul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: matmul
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 2048), dtype=torch.float32), Tensor(shape=(1,
+        16, 2048, 64), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.matmul_2
+    connections:
+      inputs:
+      - Model.hidden-tensor_49
+      - Model.hidden-tensor_45
+      outputs:
+      - Model.hidden-tensor_50
+  Model.hidden-tensor_46:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 64
+      - 2048
+    output_shapes:
+    - - 1
+      - 16
+      - 64
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_46
+    connections:
+      inputs:
+      - Model.transpose_4
+      outputs:
+      - Model.matmul_4
+  Model.hidden-tensor_47:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_47
+    connections:
+      inputs:
+      - Model.matmul_4
+      outputs:
+      - Model.mul_6
+  Model.mul_6:
+    type: mul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: mul
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 2048), dtype=torch.float32), 1.0],
+        {}]'
+      hierarchical_name: Model.mul_6
+    connections:
+      inputs:
+      - Model.hidden-tensor_47
+      outputs:
+      - Model.hidden-tensor_48
+  Model.hidden-tensor_48:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_48
+    connections:
+      inputs:
+      - Model.mul_6
+      outputs:
+      - Model.softmax
+  Model.softmax:
+    type: softmax
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    - output
+    module_args:
+      function_name: softmax
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 2048), dtype=torch.float32)],
+        {dim: -1, dtype: torch.float32}]'
+      hierarchical_name: Model.softmax
+    connections:
+      inputs:
+      - Model.hidden-tensor_48
+      outputs:
+      - Model.hidden-tensor_49
+      - Model.output-tensor_1
+  Model.hidden-tensor_49:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_49
+    connections:
+      inputs:
+      - Model.softmax
+      outputs:
+      - Model.matmul_5
+  Model.hidden-tensor_50:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_50
+    connections:
+      inputs:
+      - Model.matmul_5
+      outputs:
+      - Model.transpose_5
+  Model.transpose_5:
+    type: transpose
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: transpose
+      raw_attributes: '[[Tensor(shape=(1, 16, 2048, 64), dtype=torch.float32), 1,
+        2], {}]'
+      dim0: 1
+      dim1: 2
+      transpose_dims:
+      - 1
+      - 2
+      hierarchical_name: Model.transpose_5
+    connections:
+      inputs:
+      - Model.hidden-tensor_50
+      outputs:
+      - Model.hidden-tensor_51
+  Model.hidden-tensor_51:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_51
+    connections:
+      inputs:
+      - Model.transpose_5
+      outputs:
+      - Model.contiguous
+  Model.contiguous:
+    type: contiguous
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: contiguous
+      raw_attributes: '[[Tensor(shape=(1, 2048, 16, 64), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.contiguous
+    connections:
+      inputs:
+      - Model.hidden-tensor_51
+      outputs:
+      - Model.hidden-tensor_52
+  Model.hidden-tensor_52:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_52
+    connections:
+      inputs:
+      - Model.contiguous
+      outputs:
+      - Model.view_3
+  Model.view_3:
+    type: view
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 16
+      - 64
+    output_shapes:
+    - - 1
+      - 2048
+      - 1024
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: view
+      raw_attributes: '[[Tensor(shape=(1, 2048, 16, 64), dtype=torch.float32), 1,
+        2048, -1], {}]'
+      target_shape:
+      - 1
+      - 2048
+      - -1
+      hierarchical_name: Model.view_3
+    connections:
+      inputs:
+      - Model.hidden-tensor_52
+      outputs:
+      - Model.hidden-tensor_53
+  Model.hidden-tensor_53:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 1024
+    output_shapes:
+    - - 1
+      - 2048
+      - 1024
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_53
+    connections:
+      inputs:
+      - Model.view_3
+      outputs:
+      - Model.matmul_6
+  Model.matmul_6:
+    type: matmul
+    node_class: FunctionNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 1024
+    - - 1024
+      - 1024
+    output_shapes:
+    - - 1
+      - 2048
+      - 1024
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: matmul
+      raw_attributes: '[[Tensor(shape=(1, 2048, 1024), dtype=torch.float32), Tensor(shape=(1024,
+        1024), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.matmul_3
+    connections:
+      inputs:
+      - Model.hidden-tensor_53
+      - Model.hidden-tensor_54
+      outputs:
+      - Model.output-tensor
+  Model.hidden-tensor_54:
+    type: hidden-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1024
+      - 1024
+    output_shapes:
+    - - 1024
+      - 1024
+    input_dtypes:
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.hidden-tensor_54
+    connections:
+      inputs:
+      - Model.t_3
+      outputs:
+      - Model.matmul_6
+  Model.output-tensor:
+    type: output-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 2048
+      - 1024
+    output_shapes: []
+    input_dtypes:
+    - torch.float32
+    output_dtypes: []
+    input_types:
+    - input
+    output_types: []
+    module_args:
+      hierarchical_name: Model.output-tensor
+    connections:
+      inputs:
+      - Model.matmul_6
+      outputs: []
+  Model.output-tensor_1:
+    type: output-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 1
+      - 16
+      - 2048
+      - 2048
+    output_shapes: []
+    input_dtypes:
+    - torch.float32
+    output_dtypes: []
+    input_types:
+    - input
+    output_types: []
+    module_args:
+      hierarchical_name: Model.output-tensor_1
+    connections:
+      inputs:
+      - Model.softmax
+      outputs: []

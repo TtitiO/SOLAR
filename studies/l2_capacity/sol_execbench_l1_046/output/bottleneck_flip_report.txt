@@ -1,0 +1,36 @@
+
+════════════════════════════════════════════════════════════
+BOTTLENECK-FLIP REPORT: sol_execbench_l1_046
+════════════════════════════════════════════════════════════
+Operator    : 046_attention_softmax_with_softcapping_and_dropout
+DSL used    : PyTorch
+
+Benchmark (RTX 4090)
+  Tb  (torch reference eager)  = 18.6765 ms
+  Tk  (PyTorch optimized kernel) = 18.6747 ms   (1.00x speedup)
+  Numerical error              = 0.00e+00  ✅
+
+SOLAR Pipeline (model.py = optimized kernel)
+  T_SOL_blind  = 2.1304 ms   bottleneck: memory
+  T_SOL_aware  = 10.3526 ms   bottleneck: memory
+  T_SOL ratio  (aware/blind) = 4.86x
+
+Capacity Diagnostics
+  fits_in_l2     = False
+  peak_live      = 2048 MB
+  spill_fraction = 0.9648  (96.5 %)
+  spilled_bytes  = 7904 MB
+
+SOL Scores
+  S_blind        = 0.5000
+  S_aware        = 0.5001
+  Δ (aware−blind)= +0.0000  (+0.0 pp)
+
+VERDICT
+  Bottleneck flips compute→memory? NO (both memory; op has 0 MACs)
+  Δ SOL > 0?  NO (Δ≈0, blind≈aware)
+  Note: Tk ≈ Tb (same op, no speedup possible for elementwise)
+        Capacity model correctly adjusts prediction from 2.13ms → 10.35ms
+        due to L2 spill, but S-score cannot distinguish since reference
+        and optimized are identical.
+════════════════════════════════════════════════════════════
