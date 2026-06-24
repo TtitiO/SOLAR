@@ -95,6 +95,10 @@ def main() -> None:
 
     print("✅ Perf prediction complete.")
     print(f"  Arch: {perf.get('arch', {}).get('name', 'unknown')}")
+    if args.no_capacity_model:
+        print("  L2 capacity model: disabled, using original SOL-style estimate")
+    else:
+        print("  L2 capacity model: enabled")
     print(f"  Unfused runtime (ms): {perf.get('unfused', {}).get('runtime_ms', 0.0):.4f}")
     print(f"  Fused runtime (ms): {perf.get('fused', {}).get('runtime_ms', 0.0):.4f}")
     _cache = perf.get("cache", {})
@@ -113,5 +117,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 
