@@ -1,0 +1,103 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# NVIDIA GeForce RTX 4090 / Ada AD102.
+#
+# Verified on local machine with:
+#   nvidia-smi --query-gpu=name,compute_cap,memory.total,clocks.max.graphics,clocks.max.memory,pcie.link.gen.max,pcie.link.width.max --format=csv
+#   nvidia-smi topo -m
+#   CUDA Runtime cudaGetDeviceProperties one-command probe
+#
+# Local CUDA Runtime output:
+#   GPU name: NVIDIA GeForce RTX 4090
+#   compute capability: 8.9
+#   totalGlobalMem: 25393692672 bytes = 23.65 GiB usable
+#   multiProcessorCount: 128
+#   l2CacheSize: 75497472 bytes
+#   memoryClockRate: 10501000 kHz
+#   memoryBusWidth: 384 bits
+#   clockRate: 2520000 kHz
+#
+# Local nvidia-smi output:
+#   memory.total: 24564 MiB
+#   clocks.max.graphics: 3105 MHz
+#   clocks.max.memory: 10501 MHz
+#   PCIe: Gen4 x16
+#
+# Local topology:
+#   GPU0-GPU1 connection is SYS, not NV#.
+#   Therefore this RTX 4090 system has no NVLink path between GPUs.
+#
+# Convention note:
+#   MAC_per_cycle_* values are MACs/cycle = dense FLOPS / 2 / freq.
+#   The perf model computes total_macs / MAC_per_cycle.
+#
+# Frequency note:
+#   cudaGetDeviceProperties reports clockRate = 2520000 kHz = 2.52 GHz.
+#   nvidia-smi reports clocks.max.graphics = 3105 MHz, likely board-specific
+#   boost / OC limit. For a portable RTX 4090 config, use 2.52 GHz.
+#
+# Capacity note:
+#   CUDA reports usable totalGlobalMem = 25393692672 B.
+#   Nominal RTX 4090 memory is 24 GiB = 25769803776 B.
+#   This file follows the repo convention used by H200_SXM.yaml:
+#   DRAM_capacity is nominal binary capacity, not usable runtime memory.
+#
+# L2 bandwidth note:
+#   NVIDIA/CUDA exposes L2 size, but not official L2 bandwidth.
+#   SRAM_byte_per_cycle is therefore an estimate. If you want a fully local
+#   source for this field, run an L2 bandwidth microbenchmark.
+
+name: "RTX_4090"
+
+# Source: CUDA Runtime cudaGetDeviceProperties: l2CacheSize = 75497472 bytes.
+SRAM_capacity: 75497472
+
+# Source: estimate, not directly exposed by CUDA/nvidia-smi.
+# Assumption: RTX 4090 L2 bandwidth ~= 5.0 TB/s.
+# 5.0 TB/s / 2.52 GHz ~= 1984 B/cycle.
+SRAM_byte_per_cycle: 1984
+
+# Source: nominal RTX 4090 memory capacity, repo binary convention.
+# CUDA usable totalGlobalMem on your machine: 25393692672 B.
+# Nominal 24 GiB = 24 * 2^30 = 25769803776 B.
+DRAM_capacity: 25769803776
+
+# Source: CUDA Runtime + nvidia-smi:
+# memoryClockRate = 10501000 kHz = 10501 MHz
+# memoryBusWidth = 384 bits
+# GDDR6X bandwidth = 10501 MHz * 2 * 384 / 8 / 1000 = 1008.096 GB/s
+# DRAM_byte_per_cycle = 1008.096 GB/s / 2.52 GHz = 400.04 B/cycle.
+DRAM_byte_per_cycle: 400.0
+
+# Source: CUDA Runtime cudaGetDeviceProperties: clockRate = 2520000 kHz.
+freq_GHz: 2.52
+
+# Source: CUDA Runtime multiProcessorCount = 128.
+# Ada RTX 4090 has 128 FP32 CUDA cores / SM.
+# 128 SM * 128 FP32 CUDA cores/SM = 16384 FP32 MAC/cycle.
+MAC_per_cycle_fp32_sm: 16384
+
+# Source: NVIDIA Ada / RTX 4090 dense Tensor Core peak, derived at 2.52 GHz.
+# TF32 dense = 82.6 TFLOPS.
+# 82.6 / 2 / 2.52 ~= 16389 MAC/cycle.
+MAC_per_cycle_tf32_tc: 16389
+
+# Source: NVIDIA Ada / RTX 4090 dense Tensor Core peak, derived at 2.52 GHz.
+# FP16 dense with FP16 accumulate = 330.3 TFLOPS.
+# 330.3 / 2 / 2.52 ~= 65536 MAC/cycle.
+MAC_per_cycle_fp16_tc: 65536
+
+# Source: NVIDIA Ada / RTX 4090 dense Tensor Core peak, derived at 2.52 GHz.
+# BF16 dense with FP32 accumulate = 165.2 TFLOPS.
+# 165.2 / 2 / 2.52 ~= 32778 MAC/cycle.
+MAC_per_cycle_bf16_tc: 32778
+
+# Source: NVIDIA Ada / RTX 4090 dense Tensor Core peak, derived at 2.52 GHz.
+# FP8 dense with FP16 accumulate = 660.6 TFLOPS.
+# 660.6 / 2 / 2.52 ~= 131071 MAC/cycle.
+MAC_per_cycle_fp8_tc: 131071
+
+# Source: NVIDIA Ada / RTX 4090 dense Tensor Core peak, derived at 2.52 GHz.
+# INT8 dense = 660.6 TOPS.
+# 660.6 / 2 / 2.52 ~= 131071 MAC/cycle.
+MAC_per_cycle_int8_tc: 131071
