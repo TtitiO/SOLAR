@@ -64,7 +64,11 @@ python -m solar.cli.predict_perf_model --analysis-path $DIR/output/analysis/anal
 
 ## Corrected benchmark/SOL results
 
-All rows have a real optimized kernel and pass the `Tk < Tb` gate.
+All rows have a real optimized kernel and pass the `Tk < Tb` gate. The original
+harness allowed `solution.py` to be a copy of `model.py` (`Tk ~= Tb`), which
+pinned the SOL score near 0.5 with negligible blind/aware Δ (all |Δ| < 10⁻³).
+The corrected harness enforces `Tk < Tb`, letting the score move away from 0.5
+and the Δ become measurable.
 
 | PID | Method | Tb (ms) | Tk (ms) | Speedup | T_SOL blind | T_SOL aware | Bottleneck blind→aware | S_blind | S_aware | Δ |
 |-----|--------|---------|---------|---------|-------------|-------------|-------------------------|---------|---------|---|
@@ -78,7 +82,9 @@ All rows have a real optimized kernel and pass the `Tk < Tb` gate.
 
 These seven rows demonstrate the intended behavior: once `Tk < Tb` is real, the
 capacity-aware model raises `T_SOL` for spilled attention intermediates and the
-SOL-score delta becomes non-zero.
+SOL-score delta becomes non-zero. When `Tk ~= Tb`, the denominator of
+`S(Tk) = 1 / (1 + (Tk − T_SOL) / (Tb − T_SOL))` is near zero, collapsing the
+score toward 0.5 regardless of T_SOL.
 
 † `sol_execbench_l1_046` is an out-of-range score case: the handwritten Triton
 softcap+softmax kernel is faster than SOLAR's capacity-aware lower-bound estimate
