@@ -28,7 +28,8 @@ solutions and requires `Tk < Tb` as a hard gate.
 | Baseline provenance | Every kept `model.py` is byte-identical to `agentkernelbench_v0.json["torch code"]` |
 | Passing real handwritten optimized kernels | 7 problems |
 | Included problem directories | Passing problems only |
-| Final shared-harness sweep | 7 passed / 0 failed (`--warmup 20 --iters 200`) |
+| Latest shared-harness sweep | 7 passed / 0 failed on local RTX 4090 (`--warmup 20 --iters 200`) |
+| Latest SOLAR regeneration | Forced rerun for graph/einsum/analysis/perf artifacts; perf predicted with `configs/arch/RTX4090.yaml` |
 
 ## Protocol used by the repaired harness
 
@@ -51,16 +52,21 @@ python studies/l2_capacity/bench.py <problem_id> --warmup 20 --iters 200
 python studies/l2_capacity/bench.py --all
 ```
 
-SOLAR still runs on the baseline only:
+SOLAR still runs on the baseline only. For a full regeneration, force the graph
+step so stale CPU-only trace artifacts are not reused:
 
 ```bash
 DIR=studies/l2_capacity/<problem_id>
-python -m solar.cli.process_model --model-file $DIR/model.py --output-dir $DIR/output/graph
+python -m solar.cli.process_model --model-file $DIR/model.py --output-dir $DIR/output/graph --force-rerun
 python -m solar.cli.toeinsum_model --graph-path $DIR/output/graph/pytorch_graph.yaml --output-dir $DIR/output/einsum --no-copy-graph
 python -m solar.cli.analyze_model --einsum-graph-path $DIR/output/einsum/einsum_graph_renamed.yaml --output-dir $DIR/output/analysis --precision fp16
 python -m solar.cli.predict_perf_model --analysis-path $DIR/output/analysis/analysis.yaml --output-dir $DIR/output/perf_aware --arch-config configs/arch/RTX4090.yaml --precision fp16
 python -m solar.cli.predict_perf_model --analysis-path $DIR/output/analysis/analysis.yaml --output-dir $DIR/output/perf_blind --arch-config configs/arch/RTX4090.yaml --precision fp16 --no-capacity-model
 ```
+
+`sol_execbench_l1_046` is the one function-only baseline (`run()` rather than a
+`Model` class), so the latest rerun regenerated its einsum, analysis, and perf
+outputs from the existing checked-in `output/graph/pytorch_graph.yaml`.
 
 ## Corrected benchmark/SOL results with min-tile spill gate
 
@@ -72,13 +78,13 @@ not fuse these streams; `T_SOL` is the fusable I/O floor.
 
 | PID | Method | Tb (ms) | Tk (ms) | Speedup | T_SOL blind | T_SOL aware | Bottleneck blind→aware | S_blind | S_aware | Δ |
 |-----|--------|---------|---------|---------|-------------|-------------|-------------------------|---------|---------|---|
-| `kernelbench_l3_043` | Triton flash causal attention | 25.6957 | 22.8490 | 1.125× | 1.2483 | 1.2483 | compute→compute | 0.5309 | 0.5309 | +0.0000 |
-| `kernelbench_l3_044` | Triton flash causal attention block | 64.5526 | 62.7004 | 1.030× | 3.1208 | 3.1208 | compute→compute | 0.5077 | 0.5077 | +0.0000 |
-| `kernelbench_l3_050` | Triton fused ReLU causal attention | 11.4063 | 9.7454 | 1.170× | 0.3316 | 0.3316 | compute→compute | 0.5405 | 0.5405 | +0.0000 |
-| `multikernelbench_multikernel_064` | Triton flash causal attention block | 58.9169 | 57.2212 | 1.030× | 3.1208 | 3.1208 | compute→compute | 0.5077 | 0.5077 | +0.0000 |
-| `multikernelbench_multikernel_073` | Triton fused ReLU causal attention | 11.4150 | 9.7504 | 1.171× | 0.3316 | 0.3316 | compute→compute | 0.5406 | 0.5406 | +0.0000 |
-| `multikernelbench_multikernel_104` | Triton flash causal attention | 23.6211 | 21.5836 | 1.094× | 1.2483 | 1.2483 | compute→compute | 0.5239 | 0.5239 | +0.0000 |
-| `sol_execbench_l1_046` | Triton fused softcap softmax | 18.6740 | 2.3613 | 7.908× | 2.1304 | 2.1304 | memory→memory | 0.9862 | 0.9862 | +0.0000 |
+| `kernelbench_l3_043` | Triton flash causal attention | 22.9676 | 20.6362 | 1.113× | 1.2483 | 1.2483 | compute→compute | 0.5284 | 0.5284 | +0.0000 |
+| `kernelbench_l3_044` | Triton flash causal attention block | 57.5804 | 55.9862 | 1.028× | 3.1208 | 3.1208 | compute→compute | 0.5074 | 0.5074 | +0.0000 |
+| `kernelbench_l3_050` | Triton fused ReLU causal attention | 11.3551 | 9.6962 | 1.171× | 0.3316 | 0.3316 | compute→compute | 0.5407 | 0.5407 | +0.0000 |
+| `multikernelbench_multikernel_064` | Triton flash causal attention block | 58.4246 | 56.7967 | 1.029× | 3.1208 | 3.1208 | compute→compute | 0.5075 | 0.5075 | +0.0000 |
+| `multikernelbench_multikernel_073` | Triton fused ReLU causal attention | 11.3951 | 9.7363 | 1.170× | 0.3316 | 0.3316 | compute→compute | 0.5405 | 0.5405 | +0.0000 |
+| `multikernelbench_multikernel_104` | Triton flash causal attention | 23.5274 | 21.4742 | 1.096× | 1.2483 | 1.2483 | compute→compute | 0.5242 | 0.5242 | +0.0000 |
+| `sol_execbench_l1_046` | Triton fused softcap softmax | 18.6778 | 2.3613 | 7.910× | 2.1304 | 2.1304 | memory→memory | 0.9862 | 0.9862 | +0.0000 |
 
 These seven rows demonstrate the corrected lower-bound behavior: all reported
 scores satisfy `S≤1`. When `Tk ~= Tb`, the denominator of
@@ -90,17 +96,18 @@ solutions to avoid that invalid validation mode.
 
 The old whole-tensor peak-live diagnostics were useful for identifying the
 overcharge, but they are no longer the spill gate. The regenerated runs report
-`gate_metric: min_tile`; all seven min tiles fit and therefore charge no spill:
+`gate_metric: min_tile`; all seven min tiles fit in the RTX 4090's 75,497,472 B
+L2 and therefore charge no spill even when whole-tensor peak live is much larger:
 
-| PID | T_SOL blind | T_SOL aware | Blind bottleneck | Aware bottleneck | Flip | Spill |
-|-----|-------------|-------------|------------------|------------------|------|-------|
-| `kernelbench_l3_043` | 1.2483 | 1.2483 | compute | compute | NO | 0.0% |
-| `kernelbench_l3_044` | 3.1208 | 3.1208 | compute | compute | NO | 0.0% |
-| `kernelbench_l3_050` | 0.3316 | 0.3316 | compute | compute | NO | 0.0% |
-| `multikernelbench_multikernel_064` | 3.1208 | 3.1208 | compute | compute | NO | 0.0% |
-| `multikernelbench_multikernel_073` | 0.3316 | 0.3316 | compute | compute | NO | 0.0% |
-| `multikernelbench_multikernel_104` | 1.2483 | 1.2483 | compute | compute | NO | 0.0% |
-| `sol_execbench_l1_046` | 2.1304 | 2.1304 | memory | memory | NO | 0.0% |
+| PID | T_SOL blind | T_SOL aware | Blind bottleneck | Aware bottleneck | Flip | Gate | Min tile bytes | Peak live bytes | Spill |
+|-----|-------------|-------------|------------------|------------------|------|------|----------------|-----------------|-------|
+| `kernelbench_l3_043` | 1.2483 | 1.2483 | compute | compute | NO | min_tile | 6,144 | 1,174,405,120 | 0.0% |
+| `kernelbench_l3_044` | 3.1208 | 3.1208 | compute | compute | NO | min_tile | 7,680 | 1,610,612,736 | 0.0% |
+| `kernelbench_l3_050` | 0.3316 | 0.3316 | compute | compute | NO | min_tile | 6,144 | 830,472,192 | 0.0% |
+| `multikernelbench_multikernel_064` | 3.1208 | 3.1208 | compute | compute | NO | min_tile | 7,680 | 1,610,612,736 | 0.0% |
+| `multikernelbench_multikernel_073` | 0.3316 | 0.3316 | compute | compute | NO | min_tile | 6,144 | 830,472,192 | 0.0% |
+| `multikernelbench_multikernel_104` | 1.2483 | 1.2483 | compute | compute | NO | min_tile | 6,144 | 1,174,405,120 | 0.0% |
+| `sol_execbench_l1_046` | 2.1304 | 2.1304 | memory | memory | NO | min_tile | 8,194 | 2,147,483,648 | 0.0% |
 
 ## Interpretation
 

@@ -1,13 +1,3 @@
-"""mini_gpt_block (multikernelbench_multikernel_064) — optimized kernel.
-
-DSL chosen: CUDA C++ — reason: native PyTorch implementation for SOLAR traceability
-Operator: Description:
-an unassuming Transformer block
-
-Task instruction:
-Optimize the architecture named Model with custom kernels, replacing PyTorch operators where beneficial while preserving the constructor
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

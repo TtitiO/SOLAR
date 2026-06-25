@@ -1,38 +1,34 @@
-"""Attention softmax with softcapping (sol_execbench_l1_046) — optimized kernel.
-
-DSL chosen: PyTorch — reason: Elementwise softcapping + softmax; PyTorch's built-in
-  CUDA kernels are already highly optimized for tanh+softmax on RTX 4090.
-Operator: Gemma-2 style attention: tanh(logits/30)*30 then softmax normalization.
-Benchmark shapes: [1, 32, 4096, 4096] bf16 → input is 1024 MB (>>L2 72 MB)
-"""
-
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
-
-class Model(nn.Module):
-    """Softcapping + softmax: tanh(logits / 30.0) * 30.0, then softmax."""
-
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, attn_weights: torch.Tensor) -> torch.Tensor:
-        SOFTCAP = 30.0
-        scaled = attn_weights / SOFTCAP
-        clamped = torch.tanh(scaled)
-        softcapped = clamped * SOFTCAP
-        output = F.softmax(softcapped, dim=-1, dtype=torch.float32).to(attn_weights.dtype)
-        return output
-
-
-def get_inputs():
-    """Return all forward() inputs as CPU tensors at benchmark shapes."""
-    torch.manual_seed(0)
-    B, H, S = 1, 32, 4096
-    attn_weights = torch.randn(B, H, S, S, dtype=torch.bfloat16)
-    return [attn_weights]
-
-
-def get_init_inputs():
-    return []
+@torch.no_grad()
+def run(attn_weights: torch.Tensor) -> torch.Tensor:
+    """
+    Apply Gemma3's softcapping transformation followed by softmax.
+    
+    Softcapping: tanh(logits / 30.0) * 30.0
+    This clamps effective logit range to approximately [-30, +30]
+    
+    Args:
+        attn_weights: Attention logits of shape (batch_size, num_heads, seq_len_q, seq_len_k)
+        
+    Returns:
+        Normalized attention weights of shape (batch_size, num_heads, seq_len_q, seq_len_k)
+    """
+    SOFTCAP = 30.0
+    
+    # Apply softcapping transformation
+    # Step 1: Divide by softcap
+    scaled = attn_weights / SOFTCAP
+    
+    # Step 2: Apply tanh to clamp to [-1, 1]
+    clamped = torch.tanh(scaled)
+    
+    # Step 3: Multiply by softcap to restore scale (now in [-30, 30])
+    softcapped = clamped * SOFTCAP
+    
+    # Apply softmax normalization along the key dimension
+    # Upcast to float32 for numerical stability, then cast back
+    output = F.softmax(softcapped, dim=-1, dtype=torch.float32).to(attn_weights.dtype)
+    
+    return output

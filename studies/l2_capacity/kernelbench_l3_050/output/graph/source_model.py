@@ -1,11 +1,3 @@
-"""50_ReLUSelfAttention (kernelbench_l3_050) — optimized kernel.
-
-DSL chosen: CUDA C++ — reason: native PyTorch implementation for SOLAR traceability
-Operator: KernelBench level 3 problem 50: 50_ReLUSelfAttention.
-
-Task: implement or optimize the PyTorch `Model` with custom GPU kernels while preserving the constructor, `forward` input/output contract, and nu
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -73,4 +65,3 @@ def get_inputs():
 
 def get_init_inputs():
     return [n_embd, n_head, max_seqlen]
-

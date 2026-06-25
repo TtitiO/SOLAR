@@ -1,12 +1,3 @@
-"""min_gpt_causal_attention (multikernelbench_multikernel_104) — optimized kernel.
-
-DSL chosen: CUDA C++ — reason: native PyTorch implementation for SOLAR traceability
-Operator: Description:
-A vanilla multi-head masked self-attention layer with a projection at the end.
-It is possible to use torch.nn.MultiheadAttention here but I am including an
-explicit implementation here to
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

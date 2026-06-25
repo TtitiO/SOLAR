@@ -1,12 +1,3 @@
-"""relu_self_attention (multikernelbench_multikernel_073) — optimized kernel.
-
-DSL chosen: CUDA C++ — reason: native PyTorch implementation for SOLAR traceability
-Operator: Description:
-A multi-head masked self-attention layer with a projection at the end that uses ReLU instead of Softmax.
-It is possible to use torch.nn.MultiheadAttention here but I am including an
-expli
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
