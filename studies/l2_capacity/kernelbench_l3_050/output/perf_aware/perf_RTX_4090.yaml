@@ -25,28 +25,28 @@ unfused:
   bottleneck: memory
 fused:
   description: Per-op roofline, intermediate tensors excluded
-  memory_elements: 1628399127
-  memory_bytes: 3256798254
+  memory_elements: 26937600
+  memory_bytes: 53875200
   compute_tc_cycles: 835584
   compute_sm_cycles: 39168
   compute_cycles: 835584
-  memory_cycles: 8141995
-  total_cycles: 8141995
-  runtime_ms: 3.2309506493506497
-  arithmetic_intensity: 16.81431539321519
-  bottleneck: memory
+  memory_cycles: 134688
+  total_cycles: 835584
+  runtime_ms: 0.33158095238095237
+  arithmetic_intensity: 1016.4386029935852
+  bottleneck: compute
 fused_prefetched:
   description: Single roofline for entire graph, perfect overlap
-  memory_elements: 1628399127
-  memory_bytes: 3256798254
+  memory_elements: 26937600
+  memory_bytes: 53875200
   compute_tc_cycles: 835584
   compute_sm_cycles: 39168
   compute_cycles: 835584
-  memory_cycles: 8141995
-  total_cycles: 8141995
-  runtime_ms: 3.2309506493506497
-  arithmetic_intensity: 16.81431539321519
-  bottleneck: memory
+  memory_cycles: 134688
+  total_cycles: 835584
+  runtime_ms: 0.33158095238095237
+  arithmetic_intensity: 1016.4386029935852
+  bottleneck: compute
 memory_breakdown:
   weight_elements: 0
   weight_bytes: 0
@@ -56,20 +56,23 @@ memory_breakdown:
   intermediate_bytes: 3523215360
 cache:
   description: On-chip (L2/SRAM) capacity model for fused intermediate traffic. spilled_bytes
-    is added to fused/fused_prefetched DRAM totals when the peak live working set
+    is added to fused/fused_prefetched DRAM totals when the reduction-aware min tile
     exceeds capacity.
   capacity_aware: true
   sram_capacity_bytes: 75497472
+  gate_metric: min_tile
   intermediate_peak_live_elements: 415236096
   intermediate_peak_live_bytes: 830472192
+  intermediate_min_tile_elements: 3072
+  intermediate_min_tile_bytes: 6144
   intermediate_traffic_bytes: 3523215360
-  fits_in_l2: false
-  spill_fraction: 0.9090909090909091
-  spilled_bytes: 3202923054
+  fits_in_l2: true
+  spill_fraction: 0.0
+  spilled_bytes: 0
 speedup:
-  fused_vs_unfused: 1.0983457618252894
-  fused_prefetched_vs_unfused: 1.0983457618252894
+  fused_vs_unfused: 10.702366727941177
+  fused_prefetched_vs_unfused: 10.702366727941177
   fused_prefetched_vs_fused: 1.0
 memory_reduction:
-  fused_vs_unfused: 0.08953989284927288
-  fused_prefetched_vs_unfused: 0.08953989284927288
+  fused_vs_unfused: 0.9849388213420015
+  fused_prefetched_vs_unfused: 0.9849388213420015

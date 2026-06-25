@@ -49,7 +49,7 @@ import yaml
 from solar.einsum import EinsumAnalyzer
 from solar.common.constants import BYTES_PER_ELEMENT, DEFAULT_PRECISION
 from solar.common.types import TensorShapes
-from solar.common.utils import ensure_directory, NoAliasDumper
+from solar.common.utils import ensure_directory, NoAliasDumper, parse_einsum_equation
 
 
 PathLike = Union[str, Path]
@@ -60,6 +60,76 @@ def _product(shape: List[int]) -> int:
     for d in shape:
         out *= int(d)
     return int(out)
+
+
+_SHAPE_PRESERVING_REDUCTIONS = {
+    "softmax", "log_softmax", "softmax_",
+    "layer_norm", "layernorm", "rms_norm", "group_norm",
+}
+
+
+def _op_name(layer: Dict[str, Any]) -> str:
+    fields = ("type", "op", "op_type", "name", "layer_name", "target", "function")
+    return " ".join(str(layer.get(k, "")).lower() for k in fields)
+
+
+def _reduction_axis_positions_for_input(layer: Dict[str, Any], input_index: int) -> Set[int]:
+    """Return axis positions reduced for one input operand of a layer."""
+    positions: Set[int] = set()
+
+    equation = str(layer.get("einsum_equation", "") or "")
+    input_operands, output_tokens = parse_einsum_equation(equation)
+    if 0 <= input_index < len(input_operands):
+        output_set = set(output_tokens)
+        positions.update(
+            idx for idx, token in enumerate(input_operands[input_index])
+            if token not in output_set
+        )
+
+    tensor_shapes = layer.get("tensor_shapes") or {}
+    input_shapes = tensor_shapes.get("inputs") or []
+    output_shapes = tensor_shapes.get("outputs") or []
+    if 0 <= input_index < len(input_shapes) and output_shapes:
+        ishape = input_shapes[input_index]
+        oshape = output_shapes[0]
+        if isinstance(ishape, list) and isinstance(oshape, list):
+            for idx, in_dim in enumerate(ishape[:len(oshape)]):
+                try:
+                    if int(in_dim) > 1 and int(oshape[idx]) == 1:
+                        positions.add(idx)
+                except Exception:
+                    continue
+
+            if any(name in _op_name(layer) for name in _SHAPE_PRESERVING_REDUCTIONS):
+                if ishape:
+                    positions.add(len(ishape) - 1)
+
+    return positions
+
+
+def _reduction_axis_positions(layer: Dict[str, Any]) -> Set[int]:
+    """Return input-tensor axis positions reduced by a layer (union over inputs)."""
+    input_shapes = ((layer.get("tensor_shapes") or {}).get("inputs") or [])
+    positions: Set[int] = set()
+    for idx in range(len(input_shapes)):
+        positions.update(_reduction_axis_positions_for_input(layer, idx))
+    return positions
+
+
+def _min_tile_elems(
+    tname: str,
+    resident_positions: Set[int],
+    tensor_shapes: Dict[str, List[int]],
+) -> int:
+    """Lower-bound resident tile size for tensor tname."""
+    if not resident_positions:
+        return 1
+    shape = tensor_shapes.get(tname) or []
+    elems = 1
+    for pos in sorted(resident_positions):
+        if 0 <= pos < len(shape):
+            elems *= int(shape[pos])
+    return int(elems)
 
 
 class EinsumGraphAnalyzer:
@@ -658,24 +728,29 @@ class EinsumGraphAnalyzer:
             lid: idx for idx, lid in enumerate(layers_in.keys())
         }
 
-        # tensor_name -> element count, taken from the producer's output shapes.
+        # tensor_name -> element count/shape, taken from the producer's output shapes.
         tensor_elems: Dict[str, int] = {}
+        tensor_output_shapes: Dict[str, List[int]] = {}
         for layer_id, layer in layers_in.items():
             t_names = (layer.get("tensor_names") or {}).get("outputs") or []
             t_shapes = (layer.get("tensor_shapes") or {}).get("outputs") or []
             for oname, oshape in zip(t_names, t_shapes):
                 if isinstance(oshape, list):
                     tensor_elems[oname] = _product(oshape)
+                    tensor_output_shapes[oname] = [int(d) for d in oshape]
 
         # Build birth/death step for each intermediate tensor.  Birth = step of
         # its producer; death = max step among its consumers (it stays live
         # until its last read).  A tensor with no recorded consumer step is
         # skipped (not a live intermediate for this purpose).
         peak_intermediate_live_elems = 0
+        peak_intermediate_min_tile_elems = 0
         if intermediate_tensors:
             # delta[step] accumulates (+size at birth, -size just after death).
             births: Dict[int, int] = {}
             deaths: Dict[int, int] = {}
+            min_tile_births: Dict[int, int] = {}
+            min_tile_deaths: Dict[int, int] = {}
             for tname in intermediate_tensors:
                 producer = tensor_producers.get(tname)
                 if producer is None or producer not in layer_order:
@@ -697,20 +772,39 @@ class EinsumGraphAnalyzer:
                 # Free one step *after* the last consumer reads it.
                 deaths[death + 1] = deaths.get(death + 1, 0) + size
 
+                resident_positions: Set[int] = set()
+                for consumer_id in consumers:
+                    consumer = layers_in.get(consumer_id) or {}
+                    input_names = (consumer.get("tensor_names") or {}).get("inputs") or []
+                    for input_idx, input_name in enumerate(input_names):
+                        if input_name == tname:
+                            resident_positions.update(
+                                _reduction_axis_positions_for_input(consumer, input_idx)
+                            )
+                min_tile = _min_tile_elems(tname, resident_positions, tensor_output_shapes)
+                min_tile_births[birth] = min_tile_births.get(birth, 0) + min_tile
+                min_tile_deaths[death + 1] = min_tile_deaths.get(death + 1, 0) + min_tile
+
             # Sweep the timeline accumulating live elements; record the peak.
             running = 0
+            min_tile_running = 0
             num_steps = len(layer_order)
             for step in range(num_steps + 1):
                 running += births.get(step, 0)
                 running -= deaths.get(step, 0)
                 if running > peak_intermediate_live_elems:
                     peak_intermediate_live_elems = running
+                min_tile_running += min_tile_births.get(step, 0)
+                min_tile_running -= min_tile_deaths.get(step, 0)
+                if min_tile_running > peak_intermediate_min_tile_elems:
+                    peak_intermediate_min_tile_elems = min_tile_running
 
         if self.debug:
             print(
                 f"Debug: peak live intermediate working set = "
                 f"{peak_intermediate_live_elems} elems "
-                f"(lifetime sum = {total_intermediate_elems})"
+                f"(min tile = {peak_intermediate_min_tile_elems}, "
+                f"lifetime sum = {total_intermediate_elems})"
             )
 
         # Deduplicated graph-level external I/O: when the same tensor
@@ -745,6 +839,7 @@ class EinsumGraphAnalyzer:
                 "model_io_elements": int(total_model_io_elems),
                 "intermediate_elements": int(total_intermediate_elems),
                 "intermediate_peak_live_elements": int(peak_intermediate_live_elems),
+                "intermediate_min_tile_elements": int(peak_intermediate_min_tile_elems),
                 "num_intermediate_tensors": len(intermediate_tensors),
                 "num_orphaned_layers": len(_orphaned_layers),
             },

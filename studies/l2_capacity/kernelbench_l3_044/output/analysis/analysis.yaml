@@ -1938,9 +1938,10 @@ total:
   model_io_elements: 158079744
   intermediate_elements: 8774483968
   intermediate_peak_live_elements: 805306368
+  intermediate_min_tile_elements: 3840
   num_intermediate_tensors: 38
   num_orphaned_layers: 0
 metadata:
   precision: fp16
   bytes_per_element: 2
-  source_graph: /home/tinglin/wksp/SOLAR/studies/l2_capacity/kernelbench_l3_044/output/einsum/einsum_graph_renamed.yaml
+  source_graph: studies/l2_capacity/kernelbench_l3_044/output/einsum/einsum_graph_renamed.yaml

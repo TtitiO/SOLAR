@@ -62,59 +62,53 @@ python -m solar.cli.predict_perf_model --analysis-path $DIR/output/analysis/anal
 python -m solar.cli.predict_perf_model --analysis-path $DIR/output/analysis/analysis.yaml --output-dir $DIR/output/perf_blind --arch-config configs/arch/RTX4090.yaml --precision fp16 --no-capacity-model
 ```
 
-## Corrected benchmark/SOL results
+## Corrected benchmark/SOL results with min-tile spill gate
 
-All rows have a real optimized kernel and pass the `Tk < Tb` gate. The original
-harness allowed `solution.py` to be a copy of `model.py` (`Tk ~= Tb`), which
-pinned the SOL score near 0.5 with negligible blind/aware Δ (all |Δ| < 10⁻³).
-The corrected harness enforces `Tk < Tb`, letting the score move away from 0.5
-and the Δ become measurable.
+All rows have a real optimized kernel and pass the `Tk < Tb` gate. With the
+reduction-aware min-tile spill gate, the attention and softcap-softmax cases do
+not force SOL spill: their whole-tensor peak live values are large, but their
+minimal resident tiles fit in L2. The eager baseline `Tb` is slow because it does
+not fuse these streams; `T_SOL` is the fusable I/O floor.
 
 | PID | Method | Tb (ms) | Tk (ms) | Speedup | T_SOL blind | T_SOL aware | Bottleneck blind→aware | S_blind | S_aware | Δ |
 |-----|--------|---------|---------|---------|-------------|-------------|-------------------------|---------|---------|---|
-| `kernelbench_l3_043` | Triton flash causal attention | 25.6957 | 22.8490 | 1.125× | 1.2483 | 6.8701 | compute→memory | 0.5309 | 0.5409 | **+0.0100** |
-| `kernelbench_l3_044` | Triton flash causal attention block | 64.5526 | 62.7004 | 1.030× | 3.1208 | 16.8074 | compute→memory | 0.5077 | 0.5099 | **+0.0022** |
-| `kernelbench_l3_050` | Triton fused ReLU causal attention | 11.4063 | 9.7454 | 1.170× | 0.3316 | 3.2309 | compute→memory | 0.5405 | 0.5565 | **+0.0160** |
-| `multikernelbench_multikernel_064` | Triton flash causal attention block | 58.9169 | 57.2212 | 1.030× | 3.1208 | 16.8074 | compute→memory | 0.5077 | 0.5103 | **+0.0026** |
-| `multikernelbench_multikernel_073` | Triton fused ReLU causal attention | 11.4150 | 9.7504 | 1.171× | 0.3316 | 3.2309 | compute→memory | 0.5406 | 0.5566 | **+0.0160** |
-| `multikernelbench_multikernel_104` | Triton flash causal attention | 23.6211 | 21.5836 | 1.094× | 1.2483 | 6.8701 | compute→memory | 0.5239 | 0.5324 | **+0.0085** |
-| `sol_execbench_l1_046` | Triton fused softcap softmax | 18.6740 | 2.3613 | 7.908× | 2.1304 | 10.3526 | memory→memory | 0.9862 | 25.2089† | **+24.2226†** |
+| `kernelbench_l3_043` | Triton flash causal attention | 25.6957 | 22.8490 | 1.125× | 1.2483 | 1.2483 | compute→compute | 0.5309 | 0.5309 | +0.0000 |
+| `kernelbench_l3_044` | Triton flash causal attention block | 64.5526 | 62.7004 | 1.030× | 3.1208 | 3.1208 | compute→compute | 0.5077 | 0.5077 | +0.0000 |
+| `kernelbench_l3_050` | Triton fused ReLU causal attention | 11.4063 | 9.7454 | 1.170× | 0.3316 | 0.3316 | compute→compute | 0.5405 | 0.5405 | +0.0000 |
+| `multikernelbench_multikernel_064` | Triton flash causal attention block | 58.9169 | 57.2212 | 1.030× | 3.1208 | 3.1208 | compute→compute | 0.5077 | 0.5077 | +0.0000 |
+| `multikernelbench_multikernel_073` | Triton fused ReLU causal attention | 11.4150 | 9.7504 | 1.171× | 0.3316 | 0.3316 | compute→compute | 0.5406 | 0.5406 | +0.0000 |
+| `multikernelbench_multikernel_104` | Triton flash causal attention | 23.6211 | 21.5836 | 1.094× | 1.2483 | 1.2483 | compute→compute | 0.5239 | 0.5239 | +0.0000 |
+| `sol_execbench_l1_046` | Triton fused softcap softmax | 18.6740 | 2.3613 | 7.908× | 2.1304 | 2.1304 | memory→memory | 0.9862 | 0.9862 | +0.0000 |
 
-These seven rows demonstrate the intended behavior: once `Tk < Tb` is real, the
-capacity-aware model raises `T_SOL` for spilled attention intermediates and the
-SOL-score delta becomes non-zero. When `Tk ~= Tb`, the denominator of
+These seven rows demonstrate the corrected lower-bound behavior: all reported
+scores satisfy `S≤1`. When `Tk ~= Tb`, the denominator of
 `S(Tk) = 1 / (1 + (Tk − T_SOL) / (Tb − T_SOL))` is near zero, collapsing the
-score toward 0.5 regardless of T_SOL.
+score toward 0.5 regardless of T_SOL; the harness still rejects copied-reference
+solutions to avoid that invalid validation mode.
 
-† `sol_execbench_l1_046` is an out-of-range score case: the handwritten Triton
-softcap+softmax kernel is faster than SOLAR's capacity-aware lower-bound estimate
-(`Tk < T_SOL_aware`), so the score formula exceeds 1. This is reported explicitly
-rather than clipped.
+## SOLAR bottleneck diagnostics from regenerated min-tile runs
 
-## Preserved SOLAR bottleneck diagnostics from the previous baseline runs
-
-The old `Tk ~= Tb` scores are invalid, but the SOLAR baseline capacity diagnostics
-for the kept passing problems remain useful because they are produced from
-`model.py` only. The previous run showed these blind→aware bottleneck
-classifications:
+The old whole-tensor peak-live diagnostics were useful for identifying the
+overcharge, but they are no longer the spill gate. The regenerated runs report
+`gate_metric: min_tile`; all seven min tiles fit and therefore charge no spill:
 
 | PID | T_SOL blind | T_SOL aware | Blind bottleneck | Aware bottleneck | Flip | Spill |
 |-----|-------------|-------------|------------------|------------------|------|-------|
-| `kernelbench_l3_043` | 1.2483 | 6.8701 | compute | memory | YES | 93.6% |
-| `kernelbench_l3_044` | 3.1208 | 16.8074 | compute | memory | YES | 95.3% |
-| `kernelbench_l3_050` | 0.3316 | 3.2310 | compute | memory | YES | 90.9% |
-| `multikernelbench_multikernel_064` | 3.1208 | 16.8074 | compute | memory | YES | 95.3% |
-| `multikernelbench_multikernel_073` | 0.3316 | 3.2310 | compute | memory | YES | 90.9% |
-| `multikernelbench_multikernel_104` | 1.2483 | 6.8701 | compute | memory | YES | 93.6% |
-| `sol_execbench_l1_046` | 2.1304 | 10.3526 | memory | memory | NO | 96.5% |
+| `kernelbench_l3_043` | 1.2483 | 1.2483 | compute | compute | NO | 0.0% |
+| `kernelbench_l3_044` | 3.1208 | 3.1208 | compute | compute | NO | 0.0% |
+| `kernelbench_l3_050` | 0.3316 | 0.3316 | compute | compute | NO | 0.0% |
+| `multikernelbench_multikernel_064` | 3.1208 | 3.1208 | compute | compute | NO | 0.0% |
+| `multikernelbench_multikernel_073` | 0.3316 | 0.3316 | compute | compute | NO | 0.0% |
+| `multikernelbench_multikernel_104` | 1.2483 | 1.2483 | compute | compute | NO | 0.0% |
+| `sol_execbench_l1_046` | 2.1304 | 2.1304 | memory | memory | NO | 0.0% |
 
 ## Interpretation
 
 The corrected results support two conclusions:
 
-1. The capacity model is still load-bearing for classification: many attention
-   baselines flip from compute-bound to memory-bound once L2 spill traffic is
-   counted.
+1. Whole-tensor peak live is not a valid spill gate for fused tileable kernels;
+   it can make `T_SOL` slower than a real fused kernel and produce `S>1`.
 2. SOL-score validation requires a genuine optimized kernel. When `Tk ~= Tb`, the
    score collapses toward `0.5`; when `Tk < Tb` is real, the aware/blind score
-   difference becomes measurable, as shown by the seven Triton rows.
+   remains meaningful. For these seven rows, min-tile capacity accounting keeps
+   the fusable lower bound below the measured Triton kernels (`S≤1`).

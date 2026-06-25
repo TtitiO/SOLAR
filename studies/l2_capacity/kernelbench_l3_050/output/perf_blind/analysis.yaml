@@ -906,6 +906,7 @@ total:
   model_io_elements: 26937600
   intermediate_elements: 1761607680
   intermediate_peak_live_elements: 415236096
+  intermediate_min_tile_elements: 3072
   num_intermediate_tensors: 17
   num_orphaned_layers: 0
 metadata:

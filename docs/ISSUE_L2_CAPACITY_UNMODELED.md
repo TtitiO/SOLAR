@@ -211,44 +211,55 @@ capacity spills back to DRAM and is counted.
 
 ## Resolution
 
-Implemented as the default-on capacity-aware fused model.
+Implemented as the default-on, reduction-aware capacity model for fused
+intermediate spill.
 
 **Code:**
-- `solar/analysis/graph_analyzer.py` — liveness pass computes
-  `intermediate_peak_live_elements` (peak simultaneously-live intermediate
-  working set via `[producer_step, last_consumer_step]` interval sweep) and
-  emits it in `analysis.yaml` totals.
+- `solar/analysis/graph_analyzer.py` — liveness pass still computes
+  `intermediate_peak_live_elements` (peak simultaneously-live full tensors via
+  `[producer_step, last_consumer_step]` interval sweep), but the spill gate now
+  uses `intermediate_min_tile_elements`: the peak live sum of each
+  intermediate's minimal per-output-granule resident tile. Resident axes are
+  derived from consumer reductions (einsum operands, keepdim reductions, and a
+  small table for shape-preserving reductions such as softmax/layernorm).
 - `solar/perf/perf_model.py` — reads `SRAM_capacity`, computes
-  `spill_fraction = max(0, 1 − SRAM_capacity / peak_live_bytes)` and adds
+  `spill_fraction = max(0, 1 − SRAM_capacity / min_tile_bytes)` and adds
   `spilled_bytes = intermediate_traffic_bytes × spill_fraction` to the
   `fused`/`fused_prefetched` DRAM totals. New `capacity_aware` parameter
   (default `True`); a `cache` diagnostic block (`sram_capacity_bytes`,
-  `intermediate_peak_live_bytes`, `fits_in_l2`, `spill_fraction`,
-  `spilled_bytes`) is emitted in every run.
+  `gate_metric: min_tile`, `intermediate_peak_live_bytes`,
+  `intermediate_min_tile_bytes`, `fits_in_l2`, `spill_fraction`, `spilled_bytes`)
+  is emitted in every run.
 - `solar/cli/predict_perf_model.py` — `--no-capacity-model` flag reproduces the
   original optimistic numbers for before/after comparison.
 
-**Tests:** `tests/test_perf_l2_capacity.py` — peak-live ≤ lifetime-sum;
-no spill / unchanged result when the working set fits; strictly higher `fused`
-cost when it overflows; `--no-capacity-model` reproduces the original; spilled
-`fused` cost bounded by the unfused total.
+**Tests:** `tests/test_perf_l2_capacity.py` — min-tile ≤ peak-live ≤ lifetime-sum;
+no spill / unchanged result when the min tile fits; strictly higher `fused`
+cost for a true non-tileable overflow; `--no-capacity-model` reproduces the
+original; spilled `fused` cost bounded by the unfused total; softmax lower-bound
+case remains spill-free.
 
-**Measured effect** (matmul→relu→matmul, intermediate `[8,2048,4096]` fp16,
-H100 50 MB L2): peak live 256 MB → `spill_fraction ≈ 0.80`; `fused` runtime
-**0.0114 ms → 0.2145 ms (18.9×)** and the bottleneck flips `compute → memory`.
+**Measured effect:** the earlier whole-tensor peak-live gate was too pessimistic
+for tileable ops and could break the lower-bound property (for example,
+`sol_execbench_l1_046` reported `S=25.2`, i.e. a SOL estimate slower than the
+real Triton fused softcap-softmax kernel). With the min-tile gate, the seven
+`studies/l2_capacity` rows all fit (`spill_fraction = 0`) and land at `S≤1`;
+`sol_execbench_l1_046` returns to `T_SOL=2.1304 ms`, `S=0.9862`.
 
 **Remaining work:** `fused` and `fused_prefetched` still share the same spill
 charge (does not yet close §6 Gap 2); non-spilled intermediate traffic is not
-charged at `SRAM_byte_per_cycle`.
+charged at `SRAM_byte_per_cycle`; full-extent reduction axes can still overcharge
+when a single streamable reduction axis alone exceeds SRAM (streaming-block
+accounting is future work).
 
 ---
 
 ## Original acceptance criteria status
 
 - [x] `SRAM_capacity` is read and influences `fused` / `fused_prefetched`.
-- [x] Overflowing working set reports strictly higher `fused` cost (regression test).
-- [x] Working set that fits reports unchanged `fused` results.
-- [x] `perf_<arch>.yaml` exposes the working-set vs capacity comparison.
+- [x] Overflowing min tile reports strictly higher `fused` cost (regression test).
+- [x] Min tile that fits reports unchanged `fused` results.
+- [x] `perf_<arch>.yaml` exposes both peak-live and min-tile capacity diagnostics.
 - [x] `SOL_GUIDE.md` updated.
 
 ---
