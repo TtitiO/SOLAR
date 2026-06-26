@@ -1,0 +1,91 @@
+model_name: model
+layers:
+  Model.auxiliary-tensor:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 32768
+      - 32
+    input_dtypes: []
+    output_dtypes:
+    - torch.float32
+    input_types: []
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor
+    connections:
+      inputs: []
+      outputs:
+      - Model.matmul
+  Model.matmul:
+    type: matmul
+    node_class: FunctionNode
+    input_shapes:
+    - - 32768
+      - 32
+    - - 32
+      - 32768
+    output_shapes:
+    - - 32768
+      - 32768
+    input_dtypes:
+    - torch.float32
+    - torch.float32
+    output_dtypes:
+    - torch.float32
+    input_types:
+    - input
+    - input
+    output_types:
+    - output
+    module_args:
+      function_name: matmul
+      raw_attributes: '[[Tensor(shape=(32768, 32), dtype=torch.float32), Tensor(shape=(32,
+        32768), dtype=torch.float32)], {}]'
+      hierarchical_name: Model.Model.matmul
+    connections:
+      inputs:
+      - Model.auxiliary-tensor
+      - Model.auxiliary-tensor_1
+      outputs:
+      - Model.output-tensor
+  Model.auxiliary-tensor_1:
+    type: auxiliary-tensor
+    node_class: TensorNode
+    input_shapes: []
+    output_shapes:
+    - - 32
+      - 32768
+    input_dtypes: []
+    output_dtypes:
+    - torch.float32
+    input_types: []
+    output_types:
+    - output
+    module_args:
+      hierarchical_name: Model.Model.auxiliary-tensor_1
+    connections:
+      inputs: []
+      outputs:
+      - Model.matmul
+  Model.output-tensor:
+    type: output-tensor
+    node_class: TensorNode
+    input_shapes:
+    - - 32768
+      - 32768
+    output_shapes: []
+    input_dtypes:
+    - torch.float32
+    output_dtypes: []
+    input_types:
+    - input
+    output_types: []
+    module_args:
+      hierarchical_name: Model.output-tensor
+    connections:
+      inputs:
+      - Model.matmul
+      outputs: []

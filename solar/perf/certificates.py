@@ -91,18 +91,68 @@ def _shape_gemm_dims(layer: Dict[str, Any]) -> Optional[Tuple[int, int, int]]:
 
 
 def _einsum_gemm_dims(layer: Dict[str, Any]) -> Optional[Tuple[int, int, int]]:
+    """Derive (m, n, k) from the einsum equation by axis role, not position.
+
+    Reading roles from the equation (rather than assuming the second operand is
+    ``[K, N]``) is required because PyTorch ``nn.Linear`` stores its weight as
+    ``[out, in] = [N, K]`` (equation ``...K,NK->...N``).  A positional reader
+    mistakes ``N`` for the contraction axis and drops every Linear to GENERIC.
+
+    Roles: ``k`` is the single shared non-output axis (the contraction); ``n`` is
+    the axis present in operand B and the output but absent from A; ``m`` is the
+    product of all remaining output axes (which folds any batch dims into ``m``,
+    matching the prior positional behavior for batched matmul).
+    """
     equation = str(layer.get("einsum_equation", "") or "")
     operands, output = parse_einsum_equation(equation)
     if len(operands) != 2 or len(output) < 2:
         return None
+    a_axes, b_axes = operands[0], operands[1]
     out_set = set(output)
-    shared = (set(operands[0]) & set(operands[1])) - out_set
+    shared = (set(a_axes) & set(b_axes)) - out_set
     if len(shared) != 1:
         return None
-    return _shape_gemm_dims(layer)
+    k_axis = next(iter(shared))
+
+    # n: an axis contributed by B that survives to the output and is not in A.
+    n_candidates = [c for c in b_axes if c in out_set and c not in set(a_axes)]
+    if len(n_candidates) != 1:
+        return None
+    n_axis = n_candidates[0]
+
+    shapes = layer.get("tensor_shapes") or {}
+    inputs = shapes.get("inputs") or []
+    outputs = shapes.get("outputs") or []
+    if len(inputs) != 2 or len(outputs) != 1:
+        return None
+    a_sh, b_sh, out_sh = inputs[0], inputs[1], outputs[0]
+    if not (isinstance(a_sh, list) and isinstance(b_sh, list) and isinstance(out_sh, list)):
+        return None
+    if len(a_sh) != len(a_axes) or len(b_sh) != len(b_axes) or len(out_sh) != len(output):
+        return None
+    try:
+        a_map = dict(zip(a_axes, (int(x) for x in a_sh)))
+        b_map = dict(zip(b_axes, (int(x) for x in b_sh)))
+        out_map = dict(zip(output, (int(x) for x in out_sh)))
+        k = a_map[k_axis]
+        n = b_map[n_axis]
+        m = 1
+        for axis in output:
+            if axis != n_axis:
+                m *= out_map[axis]
+    except Exception:
+        return None
+    if m <= 0 or n <= 0 or k <= 0:
+        return None
+    return int(m), int(n), int(k)
 
 
 def _gemm_dims(layer: Dict[str, Any]) -> Optional[Tuple[int, int, int]]:
+    # Convolutions carry a matmul-shaped (im2col) einsum but must be dispatched
+    # to the CONV certificate, not GEMM.  Exclude conv types so conv
+    # classification is not pre-empted.
+    if str(layer.get("type", "") or "") in ("conv1d", "conv2d", "conv3d"):
+        return None
     return _einsum_gemm_dims(layer) or _shape_gemm_dims(layer)
 
 

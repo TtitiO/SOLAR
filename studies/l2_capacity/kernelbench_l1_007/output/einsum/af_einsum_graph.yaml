@@ -1,0 +1,76 @@
+workload:
+  rank_sizes:
+    R0: 32768
+    R1: 64
+    R2: 32768
+  bits_per_value:
+    All: 32
+  persistent_tensors: weight - Intermediates
+  einsums:
+  - name: start
+    tensor_accesses:
+    - name: start_in
+      projection: &id001
+      - r0
+      - r1
+      bits_per_value: 32
+    - name: start
+      projection: *id001
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: start_1
+    tensor_accesses:
+    - name: start_1_in
+      projection: &id002
+      - r1
+      - r2
+      bits_per_value: 32
+    - name: start_1
+      projection: *id002
+      output: true
+      bits_per_value: 32
+    renames:
+      input: Inputs()
+      output: Outputs()
+      weight: Nothing()
+    is_copy_operation: true
+  - name: Model_matmul
+    tensor_accesses:
+    - name: start
+      projection:
+      - r0
+      - r1
+      bits_per_value: 32
+    - name: start_1
+      projection:
+      - r1
+      - r2
+      bits_per_value: 32
+    - name: Model_matmul
+      projection:
+      - r0
+      - r2
+      output: true
+      bits_per_value: 32
+    renames:
+      input: start
+      output: Model_matmul
+      weight: start_1
+renames:
+  einsums:
+  - name: default
+    tensor_accesses:
+    - name: input
+      source: Inputs & Intermediates
+      expected_count: 1
+    - name: output
+      source: Outputs
+      expected_count: 1
+    - name: weight
+      source: ~(input | output)
+      expected_count: 1
