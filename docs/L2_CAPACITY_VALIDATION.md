@@ -29,7 +29,8 @@ solutions and requires `Tk < Tb` as a hard gate.
 | Passing real handwritten optimized kernels | 7 problems |
 | Included problem directories | Passing problems only |
 | Latest shared-harness sweep | 7 passed / 0 failed on local RTX 4090 (`--warmup 20 --iters 200`) |
-| Latest SOLAR regeneration | Forced rerun for graph/einsum/analysis/perf artifacts; perf predicted with `configs/arch/RTX4090.yaml` |
+| Latest SOLAR regeneration | Canonical `output/perf_aware` and `output/perf_blind` regenerated with the certified communication-LB floor and `configs/arch/RTX4090.yaml` |
+| Canonical output artifacts | `graph/`, `einsum/`, `analysis/`, `perf_aware/`, `perf_blind/` under each kept problem |
 
 ## Protocol used by the repaired harness
 
@@ -52,8 +53,8 @@ python studies/l2_capacity/bench.py <problem_id> --warmup 20 --iters 200
 python studies/l2_capacity/bench.py --all
 ```
 
-SOLAR still runs on the baseline only. For a full regeneration, force the graph
-step so stale CPU-only trace artifacts are not reused:
+SOLAR still runs on the baseline only. For a full graph regeneration, force the
+graph step so stale CPU-only trace artifacts are not reused:
 
 ```bash
 DIR=studies/l2_capacity/<problem_id>
@@ -63,6 +64,12 @@ python -m solar.cli.analyze_model --einsum-graph-path $DIR/output/einsum/einsum_
 python -m solar.cli.predict_perf_model --analysis-path $DIR/output/analysis/analysis.yaml --output-dir $DIR/output/perf_aware --arch-config configs/arch/RTX4090.yaml --precision fp16
 python -m solar.cli.predict_perf_model --analysis-path $DIR/output/analysis/analysis.yaml --output-dir $DIR/output/perf_blind --arch-config configs/arch/RTX4090.yaml --precision fp16 --no-capacity-model
 ```
+
+When only the capacity model changes, regenerating `output/perf_aware/` and
+`output/perf_blind/` from the checked `output/analysis/analysis.yaml` is
+sufficient. The committed `output/` subdirectories are the canonical simulation
+artifacts; ad-hoc rerun directories such as `aware_rerun/` or `blind_rerun/` are
+not part of the study and should not be kept.
 
 `sol_execbench_l1_046` is the one function-only baseline (`run()` rather than a
 `Model` class), so the latest rerun regenerated its einsum, analysis, and perf
@@ -116,24 +123,27 @@ old `min_tile` / whole-tensor `peak_live` gates have been removed.
 
 ## Archetype coverage and conv-dispatch safety
 
-Two additional checks exercise the parts of the certified floor the seven
-attention rows do not:
+The seven canonical rows are attention/softmax cases, so they do not by
+themselves validate every archetype. Local archive-only checks under
+`refine-logs/archive/2026-06-26-l2-capacity-cert-floor/` currently show:
 
-- **Coverage (anti-inertness).** A traced ResNet-style CNN stage (three 3×3/1×1
-  convs + ReLUs) reports **100% of MACs under certified archetypes** (3 CONV + 2
-  GENERIC) — up from 0% before conv dispatch existed. A traced transformer block
-  reports 100% of L2-overflowing heavy ops admissible (GEMM via the input-traffic
-  certificate). The floor is not inert on real graphs.
-- **Conv-dispatch necessity (safety).** At a 3×3 stride-1 conv whose Demmel–Dinh
-  sqrt-reuse term binds (`C_in=K=2048`, `B·H·W` large, overflowing L2), a single
-  blind-GEMM `2·MACs/√C` floor overshoots the Demmel–Dinh direct-conv floor by
-  `2·√(R·S) = 6×` (the proven `√(R·S/σ_wσ_h))` overshoot, here without/with the
-  COSMA leading constant). Charging blind-GEMM for convolution would inject
-  phantom DRAM traffic and break `S≤1`; the archetype-specific certificate does
-  not. By default conv is charged **compulsory-only** (Winograd/FFT-safe: those
-  backends may move strictly less than direct conv, and the backend is not
-  recoverable from the trace), with the Demmel–Dinh floor reported as a
-  diagnostic and charged only under an explicit direct/implicit-GEMM policy.
+- **Transformer-like coverage.** A synthetic transformer block reports 23.1% MACs
+  certified and 100% of inferable L2-overflowing heavy ops admissible via GEMM
+  input-traffic certificates.
+- **CNN coverage gap.** A synthetic CNN stage currently reports 0% MACs certified
+  because the checked perf cache does not classify CONV archetypes. This means
+  the anti-inertness claim is not yet killed for CNN workloads by the canonical
+  artifacts.
+- **Conv-dispatch safety direction.** A local RTX 4090 fp16 cuDNN measurement at
+  the reuse-binding overflow shape (`B=8`, `C_in=K=2048`, `H=W=56`, `R=S=3`)
+  measured `Tk≈11.99 ms`. The floor-only proxy gives a blind-GEMM/Demmel-Dinh
+  traffic factor of `6.0`, showing why a single blind-GEMM conv charge would be
+  unsafe. This is not a full Table-3 `S` result because full-shape `Tb` was not
+  measured.
+
+These supplemental checks are development evidence, not part of the canonical
+`studies/l2_capacity` validation table above, until promoted into reviewed study
+artifacts with persistent `Tb`/`Tk` and full `S` computation.
 
 ## Interpretation
 
@@ -147,6 +157,6 @@ The corrected results support three conclusions:
    score collapses toward `0.5`; when `Tk < Tb` is real, the aware/blind score
    remains meaningful. For these seven rows the certified floor keeps the fusable
    lower bound below the measured Triton kernels (`S≤1`).
-3. Per-archetype certificates are required for safety, not just coverage: a single
-   blind-GEMM floor overshoots convolution by a proven factor and would break the
-   lower-bound contract.
+3. Per-archetype certificates remain the intended path for safety, but the current
+   canonical study has not yet promoted the conv/CNN supplemental checks into a
+   full `S`-scored public validation artifact.

@@ -55,20 +55,73 @@ memory_breakdown:
   intermediate_elements: 4294967296
   intermediate_bytes: 8589934592
 cache:
-  description: On-chip (L2/SRAM) capacity model for fused intermediate traffic. spilled_bytes
-    is added to fused/fused_prefetched DRAM totals when the reduction-aware min tile
-    exceeds capacity.
+  description: On-chip (L2/SRAM) capacity model for fused intermediate traffic. Certified
+    communication lower-bound traffic is added to fused/fused_prefetched DRAM totals
+    when enabled.
   capacity_aware: false
   sram_capacity_bytes: 75497472
-  gate_metric: min_tile
+  C_elems: 37748736.0
+  gate_metric: certified_comm_lb
   intermediate_peak_live_elements: 1073741824
   intermediate_peak_live_bytes: 2147483648
-  intermediate_min_tile_elements: 4097
-  intermediate_min_tile_bytes: 8194
   intermediate_traffic_bytes: 8589934592
   fits_in_l2: true
   spill_fraction: 0.0
   spilled_bytes: 0
+  extra_dram_elements: 0.0
+  extra_dram_bytes: 0
+  potential_extra_dram_bytes: 0
+  certificates:
+  - layer_id: Model.div
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.tanh
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.mul
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.softmax
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.to
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
 speedup:
   fused_vs_unfused: 5.0
   fused_prefetched_vs_unfused: 5.0

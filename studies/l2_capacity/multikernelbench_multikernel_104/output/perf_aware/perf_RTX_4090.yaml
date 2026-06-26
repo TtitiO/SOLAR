@@ -55,20 +55,255 @@ memory_breakdown:
   intermediate_elements: 3590324224
   intermediate_bytes: 7180648448
 cache:
-  description: On-chip (L2/SRAM) capacity model for fused intermediate traffic. spilled_bytes
-    is added to fused/fused_prefetched DRAM totals when the reduction-aware min tile
-    exceeds capacity.
+  description: On-chip (L2/SRAM) capacity model for fused intermediate traffic. Certified
+    communication lower-bound traffic is added to fused/fused_prefetched DRAM totals
+    when enabled.
   capacity_aware: true
   sram_capacity_bytes: 75497472
-  gate_metric: min_tile
+  C_elems: 37748736.0
+  gate_metric: certified_comm_lb
   intermediate_peak_live_elements: 587202560
   intermediate_peak_live_bytes: 1174405120
-  intermediate_min_tile_elements: 3072
-  intermediate_min_tile_bytes: 6144
   intermediate_traffic_bytes: 7180648448
   fits_in_l2: true
   spill_fraction: 0.0
   spilled_bytes: 0
+  extra_dram_elements: 0.0
+  extra_dram_bytes: 0
+  potential_extra_dram_bytes: 0
+  certificates:
+  - layer_id: Model.linear
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.linear.bias_add
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.split
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.view
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.view_1
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.view_2
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.transpose
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.transpose_1
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.transpose_2
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.matmul
+    archetype: GEMM
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: internal matmul input
+    cert_shape:
+      m: 524288
+      n: 512
+      k: 96
+  - layer_id: Model.transpose_3
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.matmul_1
+    archetype: GEMM
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: internal matmul input
+    cert_shape:
+      m: 524288
+      n: 96
+      k: 512
+  - layer_id: Model.mul
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.masked_fill
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.softmax
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.dropout
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.transpose_4
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.contiguous
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.view_3
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.linear_1
+    archetype: GEMM
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: internal matmul input
+    cert_shape:
+      m: 65536
+      n: 768
+      k: 768
+  - layer_id: Model.linear_1.bias_add
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
+  - layer_id: Model.dropout_1
+    archetype: GENERIC
+    admissible: false
+    bound_elements: 0.0
+    bound_bytes: 0
+    subsumed_boundary_elements: 0
+    subsumed_boundary_bytes: 0
+    extra_elements: 0.0
+    extra_bytes: 0
+    fallback_reason: no admissible certificate
 speedup:
   fused_vs_unfused: 5.870421549479167
   fused_prefetched_vs_unfused: 5.870421549479167
