@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from solar.common.utils import parse_einsum_equation
 
@@ -65,6 +65,110 @@ def attention_saha_ye_elements(N: int, d: int, C_elems: float) -> float:
     if C_elems < d * d or C_elems <= 0:
         return 0.0
     return float((N * N * d * d) / (2.0 * C_elems))
+
+
+def _attention_dims(layer: Dict[str, Any]) -> Optional[Tuple[int, int, int]]:
+    """Detect a QK^T attention score matmul and return (N_seq, d, num_instances).
+
+    A QK^T matmul produces a square attention score matrix (last two output dims
+    equal) and contracts over the head dimension d which is strictly smaller than
+    the sequence length N_seq.  The batch and head axes fold into num_instances.
+
+    Returns None for any layer that does not match the QK^T signature.
+    """
+    dims = _gemm_dims(layer)
+    if dims is None:
+        return None
+    m, n, k = dims
+    shapes = layer.get("tensor_shapes") or {}
+    out_shapes = shapes.get("outputs") or []
+    if not out_shapes or not isinstance(out_shapes[0], list) or len(out_shapes[0]) < 2:
+        return None
+    out = out_shapes[0]
+    if int(out[-1]) != int(out[-2]):
+        return None  # output must be square (N_seq × N_seq)
+    N_seq = n
+    if k <= 0 or N_seq <= 0 or k >= N_seq:
+        return None  # head_dim must be strictly smaller than seq_len
+    if m <= 0 or m % N_seq != 0:
+        return None  # batch+head dims must divide evenly
+    return N_seq, k, m // N_seq
+
+
+# Op types that can appear between QK^T and PV in an attention chain without
+# interrupting the composite I/O bound analysis.
+_TRANSPARENT_FOR_ATTN: frozenset = frozenset({
+    "add", "mul", "sub", "div",
+    "softmax", "dropout", "masked_fill",
+    "layer_norm", "batch_norm", "group_norm",
+    "relu", "gelu", "sigmoid", "tanh",
+    "transpose", "reshape", "view", "flatten", "contiguous", "permute",
+    "expand", "expand_as", "scale",
+})
+
+
+def _find_attention_groups(layers: Dict[str, Any]) -> Dict[str, str]:
+    """Scan layer connections to map each QK^T layer id to its PV layer id.
+
+    Detection criteria:
+      1. Fast path: SDPA-expanded nodes whose ids end with ``.qk_matmul`` are
+         paired with the sibling ``.av_matmul`` if it exists in the graph.
+      2. General path: a matmul with a square output (last two dims equal) and
+         head_dim < seq_len, followed through transparent/elementwise ops by a
+         softmax and then another matmul (the PV layer).
+
+    Returns a dict mapping qk_layer_id → pv_layer_id.  Only pairs that
+    include a softmax on the path from QK^T to PV are recorded.
+    """
+    succ: Dict[str, List[str]] = {
+        lid: [
+            str(c)
+            for c in ((layers[lid].get("connections") or {}).get("outputs") or [])
+            if c in layers
+        ]
+        for lid in layers
+    }
+
+    qk_to_pv: Dict[str, str] = {}
+
+    for lid, layer in layers.items():
+        # Fast path for SDPA-expanded nodes.
+        if lid.endswith(".qk_matmul"):
+            pv_candidate = lid[: -len(".qk_matmul")] + ".av_matmul"
+            if pv_candidate in layers:
+                qk_to_pv[lid] = pv_candidate
+                continue
+
+        if _attention_dims(layer) is None:
+            continue
+
+        # BFS through transparent ops to find softmax then a downstream matmul.
+        visited: Set[str] = {lid}
+        frontier: List[str] = list(succ.get(lid, []))
+        found_softmax = False
+        pv_id: Optional[str] = None
+
+        while frontier:
+            cur = frontier.pop(0)
+            if cur in visited:
+                continue
+            visited.add(cur)
+            cur_layer = layers.get(cur)
+            if cur_layer is None:
+                continue
+            cur_type = str(cur_layer.get("type", "") or "").lower()
+            if _gemm_dims(cur_layer) is not None:
+                if found_softmax:
+                    pv_id = cur
+                break
+            if cur_type == "softmax":
+                found_softmax = True
+            frontier.extend(s for s in succ.get(cur, []) if s not in visited)
+
+        if pv_id is not None:
+            qk_to_pv[lid] = pv_id
+
+    return qk_to_pv
 
 
 def _shape_gemm_dims(layer: Dict[str, Any]) -> Optional[Tuple[int, int, int]]:
@@ -227,11 +331,15 @@ def evaluate_certificates(
     C_elems: float,
     bytes_per_element: float,
 ) -> Dict[str, Any]:
+    layers_dict: Dict[str, Any] = analysis.get("layers") or {}
+    qk_to_pv = _find_attention_groups(layers_dict)
+
     certificates: List[Dict[str, Any]] = []
     extra_elems = 0.0
-    for layer_id, layer in (analysis.get("layers") or {}).items():
+    for layer_id, layer in layers_dict.items():
         dims = _gemm_dims(layer)
         conv = _conv_dims(layer) if dims is None else None
+        attn = _attention_dims(layer) if (dims is not None and layer_id in qk_to_pv) else None
         cert: Dict[str, Any] = {
             "layer_id": layer_id,
             "archetype": "GENERIC",
@@ -244,7 +352,37 @@ def evaluate_certificates(
             "extra_bytes": 0,
             "fallback_reason": "no admissible certificate",
         }
-        if dims is not None:
+        if attn is not None:
+            N_seq, d, num_instances = attn
+            pv_layer = layers_dict.get(qk_to_pv[layer_id]) or {}
+            # Subsumed boundary covers all three operand groups that cross DRAM:
+            #   Q + K  – total inputs at the QK^T layer (both may be intermediate
+            #            in the graph but the tensors cross the attention boundary)
+            #   V      – the external-side input to PV (= PV total inputs minus
+            #            the attention-weight intermediate that QK^T produced)
+            qk_input_elems = int(layer.get("input_elements", 0))
+            pv_input_elems = int(pv_layer.get("input_elements", 0))
+            attn_score_elems = int(layer.get("output_elements", 0))
+            v_elems = max(0, pv_input_elems - attn_score_elems)
+            subsumed = qk_input_elems + v_elems
+            pv_output_internal = bool(pv_layer.get("output_is_intermediate"))
+            if not pv_output_internal:
+                subsumed += int(pv_layer.get("output_elements", 0))
+            per_instance = attention_saha_ye_elements(N_seq, d, C_elems)
+            bound = per_instance * num_instances
+            extra = max(0.0, bound - subsumed)
+            cert.update({
+                "archetype": "ATTENTION",
+                "cert_shape": {"N": N_seq, "d": d, "instances": num_instances},
+                "admissible": True,
+                "mode": "saha_ye",
+                "bound_elements": bound,
+                "subsumed_boundary_elements": subsumed,
+                "extra_elements": extra,
+                "fallback_reason": "",
+            })
+            extra_elems += extra
+        elif dims is not None:
             m, n, k = dims
             input_internal = bool(layer.get("input_is_intermediate"))
             output_internal = bool(layer.get("output_is_intermediate"))
