@@ -104,7 +104,7 @@ def main() -> None:
     _cache = perf.get("cache", {})
     if _cache.get("capacity_aware") and not _cache.get("fits_in_l2", True):
         print(
-            f"  ⚠️  L2 spill: {_cache.get('spilled_bytes', 0):,} bytes "
+            f"  ⚠️  Certified L2 traffic floor: {_cache.get('spilled_bytes', 0):,} bytes "
             f"(peak live {_cache.get('intermediate_peak_live_bytes', 0):,} > "
             f"capacity {_cache.get('sram_capacity_bytes', 0):,}, "
             f"fraction {_cache.get('spill_fraction', 0.0):.3f})"
@@ -117,4 +117,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -36,6 +36,7 @@ import yaml
 
 from solar.common.constants import BYTES_PER_ELEMENT, DEFAULT_PRECISION
 from solar.common.utils import ensure_directory, NoAliasDumper
+from solar.perf.certificates import evaluate_certificates
 
 
 PathLike = Union[str, Path]
@@ -155,12 +156,6 @@ class EinsumGraphPerfModel:
             total_intermediate_peak_live_elems = float(
                 total.get("intermediate_peak_live_elements", 0)
             )
-            total_intermediate_min_tile_elems = float(
-                total.get(
-                    "intermediate_min_tile_elements",
-                    total.get("intermediate_peak_live_elements", 0),
-                )
-            )
             
             # Convert elements to bytes
             total_orojenesis_bytes = total_orojenesis_elems * bytes_per_element
@@ -191,55 +186,31 @@ class EinsumGraphPerfModel:
             total_intermediate_peak_live_elems = float(
                 total.get("intermediate_peak_live_elements", 0)
             )
-            total_intermediate_min_tile_elems = float(
-                total.get(
-                    "intermediate_min_tile_elements",
-                    total.get("intermediate_peak_live_elements", 0),
-                )
-            )
 
         freq_ghz = float(arch.get("freq_GHz", 1.0))
         dram_bw = float(arch.get("DRAM_byte_per_cycle", 1.0))
 
-        # ── L2/SRAM capacity model ──────────────────────────────────────────
-        # The fused / fused_prefetched models assume intermediate tensors stay
-        # on-chip and cost no DRAM traffic.  That is only true if the live
-        # intermediate working set fits in `SRAM_capacity`.  When the reduction-
-        # aware minimum resident tile overflows on-chip capacity, that fraction must
-        # spill to DRAM, and that traffic has to be counted.  See
-        # docs/ISSUE_L2_CAPACITY_UNMODELED.md.
-        #
-        # spill_fraction = max(0, 1 - SRAM_capacity / min_tile_bytes)
-        # spilled_bytes  = intermediate_traffic_bytes * spill_fraction
-        #
-        # Properties:
-        #   - 0 when the minimum resident tile fits (min_tile_bytes <= capacity), so
-        #     graphs that fit in L2 are unchanged.
-        #   - monotonically increasing in overflow.
-        #   - bounded by the full intermediate traffic (which, added to the
-        #     fused model's external I/O, never exceeds the unfused total).
+        # ── L2/SRAM communication-certificate model ─────────────────────────
+        # Certified I/O lower bounds add only traffic not already counted by the
+        # fused graph boundary.  The potential bound is always reported; it is
+        # only charged to fused/fused_prefetched when capacity_aware=True.
         sram_capacity_bytes = float(arch.get("SRAM_capacity", 0))
+        C_elems = (sram_capacity_bytes / bytes_per_element) if bytes_per_element > 0 else 0.0
         peak_live_bytes = total_intermediate_peak_live_elems * bytes_per_element
-        min_tile_bytes = total_intermediate_min_tile_elems * bytes_per_element
         intermediate_traffic_bytes = total_intermediate_bytes
+        cert_eval = evaluate_certificates(analysis, C_elems, bytes_per_element)
+        potential_extra_dram_bytes = float(cert_eval.get("extra_dram_bytes", 0))
+        potential_extra_dram_elements = float(cert_eval.get("extra_dram_elements", 0.0))
+        fits_in_l2 = potential_extra_dram_bytes == 0
+        spill_fraction = (
+            min(1.0, potential_extra_dram_bytes / intermediate_traffic_bytes)
+            if intermediate_traffic_bytes > 0 else 0.0
+        )
+        charged_extra_dram_bytes = potential_extra_dram_bytes if capacity_aware else 0.0
 
-        # Physical truth (always computed, independent of capacity_aware): does
-        # the reduction-aware minimum resident tile fit on-chip, and if not, what fraction
-        # spills?  These are reported as diagnostics in every run.
-        fits_in_l2 = not (sram_capacity_bytes > 0 and min_tile_bytes > sram_capacity_bytes)
-        if fits_in_l2 or sram_capacity_bytes <= 0:
-            spill_fraction = 0.0
-        else:
-            spill_fraction = 1.0 - (sram_capacity_bytes / min_tile_bytes)
-
-        # The spill is only *charged* to the fused totals when capacity_aware.
-        # With capacity_aware=False the diagnostics still report the overflow,
-        # but DRAM traffic is left capacity-blind (original optimistic model).
-        spilled_bytes = intermediate_traffic_bytes * spill_fraction if capacity_aware else 0.0
-
-        # Apply spill to the fused models' DRAM byte totals.
-        total_fused_bytes += spilled_bytes
-        total_fused_prefetched_bytes += spilled_bytes
+        # Apply certified extra traffic to the fused models' DRAM byte totals.
+        total_fused_bytes += charged_extra_dram_bytes
+        total_fused_prefetched_bytes += charged_extra_dram_bytes
         total_fused_elems = total_fused_bytes / bytes_per_element
         total_fused_prefetched_elems = total_fused_prefetched_bytes / bytes_per_element
 
@@ -365,20 +336,23 @@ class EinsumGraphPerfModel:
             "cache": {
                 "description": (
                     "On-chip (L2/SRAM) capacity model for fused intermediate "
-                    "traffic. spilled_bytes is added to fused/fused_prefetched "
-                    "DRAM totals when the reduction-aware min tile exceeds capacity."
+                    "traffic. Certified communication lower-bound traffic is "
+                    "added to fused/fused_prefetched DRAM totals when enabled."
                 ),
                 "capacity_aware": bool(capacity_aware),
                 "sram_capacity_bytes": int(sram_capacity_bytes),
-                "gate_metric": "min_tile",
+                "C_elems": float(C_elems),
+                "gate_metric": "certified_comm_lb",
                 "intermediate_peak_live_elements": int(total_intermediate_peak_live_elems),
                 "intermediate_peak_live_bytes": int(peak_live_bytes),
-                "intermediate_min_tile_elements": int(total_intermediate_min_tile_elems),
-                "intermediate_min_tile_bytes": int(min_tile_bytes),
                 "intermediate_traffic_bytes": int(intermediate_traffic_bytes),
                 "fits_in_l2": bool(fits_in_l2),
                 "spill_fraction": spill_fraction,
-                "spilled_bytes": int(spilled_bytes),
+                "spilled_bytes": int(charged_extra_dram_bytes),
+                "extra_dram_elements": float(potential_extra_dram_elements),
+                "extra_dram_bytes": int(charged_extra_dram_bytes),
+                "potential_extra_dram_bytes": int(potential_extra_dram_bytes),
+                "certificates": cert_eval.get("certificates", []),
             },
             "speedup": {
                 "fused_vs_unfused": (unfused_total_cycles / fused_total_cycles) if fused_total_cycles > 0 else 1.0,
