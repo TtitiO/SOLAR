@@ -68,13 +68,16 @@ python -m solar.cli.predict_perf_model --analysis-path $DIR/output/analysis/anal
 `Model` class), so the latest rerun regenerated its einsum, analysis, and perf
 outputs from the existing checked-in `output/graph/pytorch_graph.yaml`.
 
-## Corrected benchmark/SOL results with min-tile spill gate
+## Corrected benchmark/SOL results with the certified communication-LB floor
 
-All rows have a real optimized kernel and pass the `Tk < Tb` gate. With the
-reduction-aware min-tile spill gate, the attention and softcap-softmax cases do
-not force SOL spill: their whole-tensor peak live values are large, but their
-minimal resident tiles fit in L2. The eager baseline `Tb` is slow because it does
-not fuse these streams; `T_SOL` is the fusable I/O floor.
+All rows have a real optimized kernel and pass the `Tk < Tb` gate. The capacity
+model is the **certified communication-lower-bound floor** (`gate_metric:
+certified_comm_lb`): each fused region emits a proven I/O lower bound
+(COSMA/Hong–Kung for GEMM, Demmel–Dinh for conv, Saha–Ye for attention),
+evaluated at physical SRAM, charged as `max(0, bound − subsumed_counted_boundary)`.
+For these seven attention/softmax rows the certified floor stays at or below the
+counted fused boundary, so no extra DRAM is charged and `T_SOL aware == T_SOL
+blind`; the eager baseline `Tb` is slow because it does not fuse these streams.
 
 | PID | Method | Tb (ms) | Tk (ms) | Speedup | T_SOL blind | T_SOL aware | Bottleneck blind→aware | S_blind | S_aware | Δ |
 |-----|--------|---------|---------|---------|-------------|-------------|-------------------------|---------|---------|---|
@@ -87,35 +90,63 @@ not fuse these streams; `T_SOL` is the fusable I/O floor.
 | `sol_execbench_l1_046` | Triton fused softcap softmax | 18.6778 | 2.3613 | 7.910× | 2.1304 | 2.1304 | memory→memory | 0.9862 | 0.9862 | +0.0000 |
 
 These seven rows demonstrate the corrected lower-bound behavior: all reported
-scores satisfy `S≤1`. When `Tk ~= Tb`, the denominator of
+scores satisfy `S≤1` (max `S_aware = 0.9862`). When `Tk ~= Tb`, the denominator of
 `S(Tk) = 1 / (1 + (Tk − T_SOL) / (Tb − T_SOL))` is near zero, collapsing the
 score toward 0.5 regardless of T_SOL; the harness still rejects copied-reference
 solutions to avoid that invalid validation mode.
 
-## SOLAR bottleneck diagnostics from regenerated min-tile runs
+## SOLAR bottleneck diagnostics from the certified-floor runs
 
-The old whole-tensor peak-live diagnostics were useful for identifying the
-overcharge, but they are no longer the spill gate. The regenerated runs report
-`gate_metric: min_tile`; all seven min tiles fit in the RTX 4090's 75,497,472 B
-L2 and therefore charge no spill even when whole-tensor peak live is much larger:
+The runs report `gate_metric: certified_comm_lb`. Each region is classified into
+an archetype (GEMM/CONV/ATTENTION/GENERIC) and charged its certified I/O floor
+minus the already-counted fused boundary. For all seven rows the certified floor
+is ≤ the counted boundary, so `extra_dram_bytes = 0` (no overcharge) even though
+whole-tensor peak-live (a retained diagnostic only) is much larger than L2. The
+old `min_tile` / whole-tensor `peak_live` gates have been removed.
 
-| PID | T_SOL blind | T_SOL aware | Blind bottleneck | Aware bottleneck | Flip | Gate | Min tile bytes | Peak live bytes | Spill |
-|-----|-------------|-------------|------------------|------------------|------|------|----------------|-----------------|-------|
-| `kernelbench_l3_043` | 1.2483 | 1.2483 | compute | compute | NO | min_tile | 6,144 | 1,174,405,120 | 0.0% |
-| `kernelbench_l3_044` | 3.1208 | 3.1208 | compute | compute | NO | min_tile | 7,680 | 1,610,612,736 | 0.0% |
-| `kernelbench_l3_050` | 0.3316 | 0.3316 | compute | compute | NO | min_tile | 6,144 | 830,472,192 | 0.0% |
-| `multikernelbench_multikernel_064` | 3.1208 | 3.1208 | compute | compute | NO | min_tile | 7,680 | 1,610,612,736 | 0.0% |
-| `multikernelbench_multikernel_073` | 0.3316 | 0.3316 | compute | compute | NO | min_tile | 6,144 | 830,472,192 | 0.0% |
-| `multikernelbench_multikernel_104` | 1.2483 | 1.2483 | compute | compute | NO | min_tile | 6,144 | 1,174,405,120 | 0.0% |
-| `sol_execbench_l1_046` | 2.1304 | 2.1304 | memory | memory | NO | min_tile | 8,194 | 2,147,483,648 | 0.0% |
+| PID | T_SOL blind | T_SOL aware | Blind bottleneck | Aware bottleneck | Flip | Gate | Archetypes | Extra DRAM bytes | Peak live (diag) |
+|-----|-------------|-------------|------------------|------------------|------|------|------------|------------------|------------------|
+| `kernelbench_l3_043` | 1.2483 | 1.2483 | compute | compute | NO | certified_comm_lb | 3 GEMM + 19 GENERIC | 0 | 1,120 MB |
+| `kernelbench_l3_044` | 3.1208 | 3.1208 | compute | compute | NO | certified_comm_lb | 3 GEMM + 36 GENERIC | 0 | 1,536 MB |
+| `kernelbench_l3_050` | 0.3316 | 0.3316 | compute | compute | NO | certified_comm_lb | 2 GEMM + 16 GENERIC | 0 | 792 MB |
+| `multikernelbench_multikernel_064` | 3.1208 | 3.1208 | compute | compute | NO | certified_comm_lb | 3 GEMM + 36 GENERIC | 0 | 1,536 MB |
+| `multikernelbench_multikernel_073` | 0.3316 | 0.3316 | compute | compute | NO | certified_comm_lb | 2 GEMM + 16 GENERIC | 0 | 792 MB |
+| `multikernelbench_multikernel_104` | 1.2483 | 1.2483 | compute | compute | NO | certified_comm_lb | 3 GEMM + 19 GENERIC | 0 | 1,120 MB |
+| `sol_execbench_l1_046` | 2.1304 | 2.1304 | memory | memory | NO | certified_comm_lb | 5 GENERIC | 0 | 2,048 MB |
+
+## Archetype coverage and conv-dispatch safety
+
+Two additional checks exercise the parts of the certified floor the seven
+attention rows do not:
+
+- **Coverage (anti-inertness).** A traced ResNet-style CNN stage (three 3×3/1×1
+  convs + ReLUs) reports **100% of MACs under certified archetypes** (3 CONV + 2
+  GENERIC) — up from 0% before conv dispatch existed. A traced transformer block
+  reports 100% of L2-overflowing heavy ops admissible (GEMM via the input-traffic
+  certificate). The floor is not inert on real graphs.
+- **Conv-dispatch necessity (safety).** At a 3×3 stride-1 conv whose Demmel–Dinh
+  sqrt-reuse term binds (`C_in=K=2048`, `B·H·W` large, overflowing L2), a single
+  blind-GEMM `2·MACs/√C` floor overshoots the Demmel–Dinh direct-conv floor by
+  `2·√(R·S) = 6×` (the proven `√(R·S/σ_wσ_h))` overshoot, here without/with the
+  COSMA leading constant). Charging blind-GEMM for convolution would inject
+  phantom DRAM traffic and break `S≤1`; the archetype-specific certificate does
+  not. By default conv is charged **compulsory-only** (Winograd/FFT-safe: those
+  backends may move strictly less than direct conv, and the backend is not
+  recoverable from the trace), with the Demmel–Dinh floor reported as a
+  diagnostic and charged only under an explicit direct/implicit-GEMM policy.
 
 ## Interpretation
 
-The corrected results support two conclusions:
+The corrected results support three conclusions:
 
 1. Whole-tensor peak live is not a valid spill gate for fused tileable kernels;
-   it can make `T_SOL` slower than a real fused kernel and produce `S>1`.
+   it can make `T_SOL` slower than a real fused kernel and produce `S>1`. The
+   certified communication-LB floor replaces it and never overshoots the counted
+   boundary on these rows (`extra_dram = 0`, `S≤1`).
 2. SOL-score validation requires a genuine optimized kernel. When `Tk ~= Tb`, the
    score collapses toward `0.5`; when `Tk < Tb` is real, the aware/blind score
-   remains meaningful. For these seven rows, min-tile capacity accounting keeps
-   the fusable lower bound below the measured Triton kernels (`S≤1`).
+   remains meaningful. For these seven rows the certified floor keeps the fusable
+   lower bound below the measured Triton kernels (`S≤1`).
+3. Per-archetype certificates are required for safety, not just coverage: a single
+   blind-GEMM floor overshoots convolution by a proven factor and would break the
+   lower-bound contract.

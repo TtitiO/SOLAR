@@ -112,6 +112,66 @@ def _external_input_elems(layer: Dict[str, Any]) -> int:
     return int(layer.get("input_elements", 0))
 
 
+# Convolution charge policy.  Demmel-Dinh is a proven I/O lower bound for the
+# *direct / implicit-GEMM* convolution families.  Winograd/FFT backends may move
+# strictly less, so charging the direct-conv floor against an unknown backend can
+# break the SOL lower-bound contract.  Because the backend is not recoverable
+# from the traced graph, the default is "compulsory_only": classify the CONV
+# archetype and report the Demmel-Dinh bound as a diagnostic, but charge 0 extra
+# (always a valid floor).  Set to "direct_gemm" only when every charged conv is
+# known to run a direct/implicit-GEMM kernel (e.g. the Claim-2 analytical study),
+# in which case the certified floor is charged like the GEMM certificate.
+CONV_CHARGE_POLICY = "compulsory_only"
+
+
+def _conv_dims(layer: Dict[str, Any]) -> Optional[Dict[str, float]]:
+    """Map a standard (groups=1) conv layer to Demmel-Dinh parameters.
+
+    Returns a dict with the products the 5-term bound actually uses
+    (``W*H`` output-spatial, ``R*S`` filter-spatial, ``sigma_w*sigma_h``
+    stride), collapsed so the same helper serves conv1d/2d/3d.  The stride
+    product is recovered from the input/output spatial-size ratio because the
+    analysis layer does not carry ``module_args``/stride.  Returns ``None`` for
+    grouped/depthwise/transpose convs (they fall through to GENERIC = safe 0).
+    """
+    layer_type = str(layer.get("type", "") or "")
+    if layer_type not in ("conv1d", "conv2d", "conv3d"):
+        return None
+    shapes = layer.get("tensor_shapes") or {}
+    inputs = shapes.get("inputs") or []
+    outputs = shapes.get("outputs") or []
+    if len(inputs) < 2 or len(outputs) < 1:
+        return None
+    act, weight, out = inputs[0], inputs[1], outputs[0]
+    if not (isinstance(act, list) and isinstance(weight, list) and isinstance(out, list)):
+        return None
+    if len(act) < 3 or len(weight) < 3 or len(out) < 3:
+        return None
+    try:
+        B = int(out[0])
+        K = int(out[1])
+        C_in = int(weight[1])
+        # groups=1 only: weight in-channels must equal activation channels.
+        if int(act[1]) != C_in or int(weight[0]) != K:
+            return None
+        out_spatial = _prod([int(x) for x in out[2:]])
+        in_spatial = _prod([int(x) for x in act[2:]])
+        filter_spatial = _prod([int(x) for x in weight[2:]])
+        if out_spatial <= 0 or in_spatial <= 0 or filter_spatial <= 0:
+            return None
+        # sigma_w*sigma_h captured as the input/output spatial ratio.
+        sigma_prod = in_spatial / out_spatial
+        # Collapse to the 2D signature via products (W=1, R=1, sigma_w=1).
+        return {
+            "B": B, "K": K, "C_in": C_in,
+            "W": 1, "H": out_spatial,
+            "R": 1, "S": filter_spatial,
+            "sigma_w": 1, "sigma_h": sigma_prod,
+        }
+    except Exception:
+        return None
+
+
 def evaluate_certificates(
     analysis: Dict[str, Any],
     C_elems: float,
@@ -121,6 +181,7 @@ def evaluate_certificates(
     extra_elems = 0.0
     for layer_id, layer in (analysis.get("layers") or {}).items():
         dims = _gemm_dims(layer)
+        conv = _conv_dims(layer) if dims is None else None
         cert: Dict[str, Any] = {
             "layer_id": layer_id,
             "archetype": "GENERIC",
@@ -153,6 +214,36 @@ def evaluate_certificates(
                 subsumed = external_inputs + output_elems
                 extra = max(0.0, bound - subsumed)
                 cert.update({"admissible": True, "mode": "output_external", "bound_elements": bound, "subsumed_boundary_elements": subsumed, "extra_elements": extra, "fallback_reason": ""})
+                extra_elems += extra
+        elif conv is not None:
+            input_internal = bool(layer.get("input_is_intermediate"))
+            external_inputs = _external_input_elems(layer)
+            output_elems = int(layer.get("output_elements", 0))
+            output_internal = bool(layer.get("output_is_intermediate"))
+            bound = conv_demm_dinh_5term_elements(
+                B=conv["B"], K=conv["K"], C_in=conv["C_in"],
+                W=conv["W"], H=conv["H"], R=conv["R"], S=conv["S"],
+                C_elems=C_elems, sigma_w=conv["sigma_w"], sigma_h=conv["sigma_h"],
+            )
+            cert.update({"archetype": "CONV", "cert_shape": {k: conv[k] for k in ("B", "K", "C_in", "H", "S")}})
+            if input_internal:
+                # Input re-fetch certificate needs external read operands.
+                cert.update({"bound_elements": bound, "fallback_reason": "internal conv input"})
+            else:
+                # Boundary already counted: external inputs (+ output write if external).
+                subsumed = external_inputs + (0 if output_internal else output_elems)
+                # Direct/implicit-GEMM floor is charged only under that policy;
+                # default compulsory_only keeps the contract safe vs Winograd/FFT.
+                charged = CONV_CHARGE_POLICY == "direct_gemm"
+                extra = max(0.0, bound - subsumed) if charged else 0.0
+                cert.update({
+                    "admissible": True,
+                    "mode": "conv_direct_gemm" if charged else "conv_compulsory_only",
+                    "bound_elements": bound,
+                    "subsumed_boundary_elements": subsumed,
+                    "extra_elements": extra,
+                    "fallback_reason": "" if charged else "winograd-safe: bound reported, not charged",
+                })
                 extra_elems += extra
 
         cert["bound_bytes"] = int(cert["bound_elements"] * bytes_per_element)
