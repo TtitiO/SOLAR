@@ -1,0 +1,96 @@
+arch:
+  name: RTX_4090
+  freq_GHz: 2.52
+  DRAM_byte_per_cycle: 400.0
+  mac_per_cycle_key: MAC_per_cycle_fp16_tc
+  MAC_per_cycle: 65536.0
+  MAC_per_cycle_fp32_sm: 16384.0
+  ridge_point: 163.84
+workload:
+  total_macs: 34359738368
+  total_other_ops: 0
+  total_flops: 68719476736
+  bytes_per_element: 2
+unfused:
+  description: Each op in isolation, all tensors from DRAM
+  memory_elements: 1075838976
+  memory_bytes: 2151677952
+  compute_tc_cycles: 524288
+  compute_sm_cycles: 0
+  compute_cycles: 524288
+  memory_cycles: 5379194
+  total_cycles: 5379194
+  runtime_ms: 2.134601142857143
+  arithmetic_intensity: 15.968810916179336
+  bottleneck: memory
+fused:
+  description: Per-op roofline, intermediate tensors excluded
+  memory_elements: 1084926634
+  memory_bytes: 2169853269
+  compute_tc_cycles: 524288
+  compute_sm_cycles: 0
+  compute_cycles: 524288
+  memory_cycles: 5424633
+  total_cycles: 5424633
+  runtime_ms: 2.1526322113095238
+  arithmetic_intensity: 15.835051548824337
+  bottleneck: memory
+fused_prefetched:
+  description: Single roofline for entire graph, perfect overlap
+  memory_elements: 1084926634
+  memory_bytes: 2169853269
+  compute_tc_cycles: 524288
+  compute_sm_cycles: 0
+  compute_cycles: 524288
+  memory_cycles: 5424633
+  total_cycles: 5424633
+  runtime_ms: 2.1526322113095238
+  arithmetic_intensity: 15.835051548824337
+  bottleneck: memory
+memory_breakdown:
+  weight_elements: 0
+  weight_bytes: 0
+  model_io_elements: 1075838976
+  model_io_bytes: 2151677952
+  intermediate_elements: 0
+  intermediate_bytes: 0
+cache:
+  description: On-chip (L2/SRAM) capacity model for fused intermediate traffic. Certified
+    communication lower-bound traffic is added to fused/fused_prefetched DRAM totals
+    when enabled.
+  capacity_aware: true
+  sram_capacity_bytes: 75497472
+  C_elems: 37748736.0
+  gate_metric: certified_comm_lb
+  intermediate_peak_live_elements: 0
+  intermediate_peak_live_bytes: 0
+  intermediate_traffic_bytes: 0
+  fits_in_l2: false
+  spill_fraction: 0.0
+  spilled_bytes: 18175317
+  extra_dram_elements: 9087658.666666746
+  extra_dram_bytes: 18175317
+  potential_extra_dram_bytes: 18175317
+  certificates:
+  - layer_id: Model.matmul
+    archetype: GEMM
+    admissible: true
+    bound_elements: 1084926634.6666667
+    bound_bytes: 2169853269
+    subsumed_boundary_elements: 1075838976
+    subsumed_boundary_bytes: 2151677952
+    extra_elements: 9087658.666666746
+    extra_bytes: 18175317
+    fallback_reason: ''
+    cert_shape:
+      m: 32768
+      n: 32768
+      k: 32
+    mode: output_external
+speedup:
+  fused_vs_unfused: 0.9916237114925396
+  fused_prefetched_vs_unfused: 0.9916237114925396
+  fused_prefetched_vs_fused: 1.0
+memory_reduction:
+  fused_vs_unfused: -0.00844704337984492
+  fused_prefetched_vs_unfused: -0.00844704337984492

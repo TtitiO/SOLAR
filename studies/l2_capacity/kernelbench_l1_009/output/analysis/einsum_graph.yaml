@@ -1,0 +1,118 @@
+model_name: model
+layers:
+  start:
+    type: start
+    einsum_equation: ->A0B0
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: false
+    tensor_names:
+      inputs: []
+      outputs:
+      - start.Output
+    tensor_types:
+      inputs: []
+      outputs:
+      - input
+    tensor_shapes:
+      inputs: []
+      outputs:
+      - - 32768
+        - 32
+    operands:
+      start:
+      - A0
+      - B0
+    connections:
+      inputs: []
+      outputs:
+      - Model.matmul
+    tensor_dtypes:
+      inputs: []
+      outputs:
+      - torch.float32
+  start_1:
+    type: start
+    einsum_equation: ->A1B1
+    elementwise_op: copy
+    reduction_op: none
+    is_real_einsum: false
+    is_einsum_supportable: false
+    tensor_names:
+      inputs: []
+      outputs:
+      - start_1.Output
+    tensor_types:
+      inputs: []
+      outputs:
+      - input
+    tensor_shapes:
+      inputs: []
+      outputs:
+      - - 32
+        - 32768
+    operands:
+      start_1:
+      - A1
+      - B1
+    connections:
+      inputs: []
+      outputs:
+      - Model.matmul
+    tensor_dtypes:
+      inputs: []
+      outputs:
+      - torch.float32
+  Model.matmul:
+    type: matmul
+    einsum_equation: MK,KN->MN
+    elementwise_op: mul
+    reduction_op: add
+    is_real_einsum: true
+    is_einsum_supportable: true
+    tensor_names:
+      inputs:
+      - start.Output
+      - start_1.Output
+      outputs:
+      - Model.matmul.Output
+    tensor_types:
+      inputs:
+      - input
+      - input
+      outputs:
+      - output
+    tensor_shapes:
+      inputs:
+      - - 32768
+        - 32
+      - - 32
+        - 32768
+      outputs:
+      - - 32768
+        - 32768
+    operands:
+      Input:
+      - M
+      - K
+      Weight:
+      - K
+      - N
+      Output:
+      - M
+      - N
+    connections:
+      inputs:
+      - start
+      - start_1
+      outputs: []
+    tensor_dtypes:
+      inputs:
+      - torch.float32
+      - torch.float32
+      outputs:
+      - torch.float32
+    raw_attributes: '[[Tensor(shape=(32768, 32), dtype=torch.float32), Tensor(shape=(32,
+      32768), dtype=torch.float32)], {}]'
+    taco_expression: O0[m,n] = In0[m,k] * In1[k,n]

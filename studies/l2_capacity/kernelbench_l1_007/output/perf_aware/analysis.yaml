@@ -1,0 +1,69 @@
+layers:
+  Model.matmul:
+    type: matmul
+    einsum_equation: MK,KN->MN
+    is_real_einsum: true
+    macs: 68719476736
+    other_ops: 0
+    flops: 137438953472
+    unfused_elements: 1077936128
+    orojenesis_elements: null
+    fused_elements: 1077936128
+    tensor_shapes:
+      inputs:
+      - - 32768
+        - 64
+      - - 64
+        - 32768
+      outputs:
+      - - 32768
+        - 32768
+    tensor_sizes:
+      inputs:
+      - 2097152
+      - 2097152
+      outputs:
+      - 1073741824
+    memory_elements:
+      inputs:
+      - 2097152
+      - 2097152
+      outputs:
+      - 1073741824
+    tensor_types:
+      inputs:
+      - input
+      - input
+      outputs:
+      - output
+    input_elements: 4194304
+    output_elements: 1073741824
+    intermediate_elements: 0
+    model_io_elements: 1077936128
+    input_is_intermediate: false
+    output_is_intermediate: false
+    is_orphaned: false
+    connections:
+      inputs:
+      - start
+      - start_1
+      outputs: []
+total:
+  num_layers: 1
+  num_start_nodes_filtered: 2
+  macs: 68719476736
+  other_ops: 0
+  flops: 137438953472
+  unfused_elements: 1077936128
+  orojenesis_elements: null
+  fused_elements: 1077936128
+  fused_prefetched_elements: 1077936128
+  model_io_elements: 1077936128
+  intermediate_elements: 0
+  intermediate_peak_live_elements: 0
+  num_intermediate_tensors: 0
+  num_orphaned_layers: 0
+metadata:
+  precision: fp16
+  bytes_per_element: 2
+  source_graph: studies/l2_capacity/kernelbench_l1_007/output/einsum/einsum_graph.yaml
